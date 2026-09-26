@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from homeassistant.setup import async_setup_component
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.room_thermostat.const import (
@@ -28,7 +29,7 @@ from custom_components.room_thermostat.const import (
 
 TEMP_SENSOR = "sensor.schlafzimmer_temperatur"
 HUMIDITY_SENSOR = "sensor.schlafzimmer_luftfeuchtigkeit"
-HEATER = "switch.schlafzimmer_heizventil"
+HEATER = "input_boolean.schlafzimmer_heizventil"
 SCHEDULE = "schedule.heizung_schlafzimmer"
 
 
@@ -76,9 +77,18 @@ def make_hub_entry(*, subentries: list[dict[str, Any]] | None = None) -> MockCon
     )
 
 
-def set_base_states(hass, *, temperature: float = 19.0, humidity: float = 45.0) -> None:
-    """Seed the sensors/switch/schedule this thermostat depends on."""
+async def async_setup_base(hass, *, temperature: float = 19.0, humidity: float = 45.0) -> None:
+    """Seed the sensors/schedule and a *real* heater entity this thermostat depends on.
+
+    The heater must be a real entity (not just a bare state) so that the
+    homeassistant.turn_on/turn_off services the integration calls actually do
+    something, exactly like generic_thermostat's own test suite sets up a
+    real switch/input_boolean instead of faking the state.
+    """
+    assert await async_setup_component(
+        hass, "input_boolean", {"input_boolean": {HEATER.split(".")[1]: None}}
+    )
+    await hass.async_block_till_done()
     hass.states.async_set(TEMP_SENSOR, str(temperature))
     hass.states.async_set(HUMIDITY_SENSOR, str(humidity))
-    hass.states.async_set(HEATER, "off")
     hass.states.async_set(SCHEDULE, "off")

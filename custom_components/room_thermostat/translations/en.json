@@ -13,6 +13,10 @@
   "config_subentries": {
     "thermostat": {
       "title": "Thermostat",
+      "entry_type": "Thermostat",
+      "initiate_flow": {
+        "user": "Add thermostat"
+      },
       "step": {
         "user": {
           "title": "Add thermostat",

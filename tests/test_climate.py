@@ -24,8 +24,8 @@ from .helpers import (
     HEATER,
     SCHEDULE,
     TEMP_SENSOR,
+    async_setup_base,
     make_hub_entry,
-    set_base_states,
     thermostat_subentry,
 )
 
@@ -60,7 +60,7 @@ async def _set_temperature(hass, temperature: float) -> None:
 
 async def test_heat_mode_turns_heater_on_when_cold(hass) -> None:
     """Item 3: heat-mode control turns the heater on when below target."""
-    set_base_states(hass, temperature=19.0)
+    await async_setup_base(hass, temperature=19.0)
     await _setup(hass)
 
     await _set_hvac_mode(hass, HVACMode.HEAT)
@@ -74,7 +74,7 @@ async def test_heat_mode_turns_heater_on_when_cold(hass) -> None:
 
 async def test_hysteresis_deadband_does_not_toggle(hass) -> None:
     """Item 4: within [target-cold, target+hot] the switch is left alone."""
-    set_base_states(hass, temperature=19.0)
+    await async_setup_base(hass, temperature=19.0)
     await _setup(hass)
     await _set_hvac_mode(hass, HVACMode.HEAT)
     await _set_temperature(hass, 20.0)  # cold=0.2, hot=0.2 -> on<=19.8, off>=20.2
@@ -96,7 +96,7 @@ async def test_hysteresis_deadband_does_not_toggle(hass) -> None:
 
 async def test_auto_mode_uses_comfort_when_schedule_on(hass) -> None:
     """Item 5."""
-    set_base_states(hass, temperature=19.0)
+    await async_setup_base(hass, temperature=19.0)
     await _setup(hass)
     hass.states.async_set(SCHEDULE, "on")
     await _set_hvac_mode(hass, HVACMode.AUTO)
@@ -109,7 +109,7 @@ async def test_auto_mode_uses_comfort_when_schedule_on(hass) -> None:
 
 async def test_auto_mode_uses_eco_when_schedule_off(hass) -> None:
     """Item 6."""
-    set_base_states(hass, temperature=19.0)
+    await async_setup_base(hass, temperature=19.0)
     await _setup(hass)
     hass.states.async_set(SCHEDULE, "off")
     await _set_hvac_mode(hass, HVACMode.AUTO)
@@ -122,7 +122,7 @@ async def test_auto_mode_uses_eco_when_schedule_off(hass) -> None:
 
 async def test_current_humidity_reported(hass) -> None:
     """Item 7."""
-    set_base_states(hass, temperature=19.0, humidity=55.0)
+    await async_setup_base(hass, temperature=19.0, humidity=55.0)
     await _setup(hass)
 
     state = hass.states.get(CLIMATE_ENTITY_ID)
@@ -131,7 +131,7 @@ async def test_current_humidity_reported(hass) -> None:
 
 async def test_temperature_sensor_unavailable_no_immediate_failsafe(hass) -> None:
     """Item 8: a bad reading alone must not immediately trip the failsafe."""
-    set_base_states(hass, temperature=19.0)
+    await async_setup_base(hass, temperature=19.0)
     await _setup(hass)
     await _set_hvac_mode(hass, HVACMode.HEAT)
     await _set_temperature(hass, 21.0)
@@ -148,7 +148,7 @@ async def test_temperature_sensor_unavailable_no_immediate_failsafe(hass) -> Non
 
 async def test_failsafe_engages_after_timeout(hass) -> None:
     """Item 9: after sensor_stale_timeout minutes, the heater is forced off."""
-    set_base_states(hass, temperature=19.0)
+    await async_setup_base(hass, temperature=19.0)
     await _setup(hass)
     await _set_hvac_mode(hass, HVACMode.HEAT)
     await _set_temperature(hass, 21.0)
@@ -169,7 +169,7 @@ async def test_failsafe_engages_after_timeout(hass) -> None:
 
 async def test_sensor_recovery_resumes_normal_control(hass) -> None:
     """Item 10: once the sensor is valid again, control resumes automatically."""
-    set_base_states(hass, temperature=19.0)
+    await async_setup_base(hass, temperature=19.0)
     await _setup(hass)
     await _set_hvac_mode(hass, HVACMode.HEAT)
     await _set_temperature(hass, 21.0)
@@ -201,7 +201,7 @@ async def test_restart_restores_hvac_mode_and_temperature(hass) -> None:
             )
         ],
     )
-    set_base_states(hass, temperature=19.0)
+    await async_setup_base(hass, temperature=19.0)
     await _setup(hass)
 
     state = hass.states.get(CLIMATE_ENTITY_ID)
