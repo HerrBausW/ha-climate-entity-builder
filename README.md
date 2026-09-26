@@ -8,6 +8,12 @@ A Home Assistant custom integration that builds a full virtual room thermostat
 out of entities you already have: a temperature sensor, a switch (your heating
 valve/relay), and optionally a humidity sensor and a `schedule.*` entity.
 
+## Requirements
+
+Home Assistant **2025.9 or newer** (this integration relies on
+[config subentries](https://developers.home-assistant.io/docs/config_entries_config_flow_handler/#config-subentries),
+introduced in HA 2025.7).
+
 ## Why
 
 Home Assistant's built-in [`generic_thermostat`](https://www.home-assistant.io/integrations/generic_thermostat/)
@@ -58,7 +64,7 @@ Flow + Subentries) and gives every room its own device with a single
 1. Settings → Devices & Services → Add Integration → **Room Thermostat**.
    This creates the hub (only one is needed/allowed).
 2. On the integration's page, click **Add thermostat** and fill in the form:
-   - Name (e.g. `Küche`)
+   - Name (e.g. `Kitchen`)
    - Temperature sensor (`device_class: temperature`)
    - Heater output (a `switch.*` or `input_boolean.*`)
    - Optional: humidity sensor, schedule, min/max temperature, step size,
@@ -84,7 +90,7 @@ Flow + Subentries) and gives every room its own device with a single
 
 ### Schedule example
 
-Create a schedule like `schedule.heizung_kueche` in Settings → Automations &
+Create a schedule like `schedule.kitchen_heating` in Settings → Automations &
 Scenes → Schedules (e.g. weekdays 06:00–22:00), then select it as this
 thermostat's schedule. Whenever that schedule is active, `auto` mode uses the
 comfort temperature; otherwise the eco/setback temperature.
@@ -116,35 +122,38 @@ resumes immediately and the failsafe attribute clears.
 - The heater output must already exist as a `switch.*` or `input_boolean.*`
   entity; multiple actuators per room are not yet supported.
 - The entity id of a newly added thermostat is derived from its name (e.g.
-  `climate.thermostat_kueche`), not from any previous entity — see Migration.
+  `climate.thermostat_bedroom`), not from any previous entity — see Migration.
 
-## Example configuration (private test setup)
+## Example configuration
 
-| Room       | Temperature                          | Humidity                               | Heater                            |
-|------------|---------------------------------------|------------------------------------------|------------------------------------|
-| Schlafzimmer | `sensor.schlafzimmer_temperatur`    | `sensor.schlafzimmer_luftfeuchtigkeit`  | `switch.schlafzimmer_heizventil`  |
-| Küche      | `sensor.kuche_temperatur`             | `sensor.kuche_luftfeuchtigkeit`          | `switch.kuche_heizventil`         |
-| Gäste-WC   | `sensor.gaste_wc_temperatur`          | `sensor.gaste_wc_luftfeuchtigkeit`       | `switch.gaste_wc_heizventil`      |
+| Room        | Temperature                       | Humidity                           | Heater                       |
+|-------------|-------------------------------------|---------------------------------------|---------------------------------|
+| Bedroom     | `sensor.bedroom_temperature`       | `sensor.bedroom_humidity`          | `switch.bedroom_heating_valve` |
+| Kitchen     | `sensor.kitchen_temperature`       | `sensor.kitchen_humidity`          | `switch.kitchen_heating_valve` |
+| Guest toilet| `sensor.guest_toilet_temperature`  | `sensor.guest_toilet_humidity`     | `switch.guest_toilet_heating_valve` |
 
-Suggested values matching a typical `generic_thermostat` migration:
-`min_temp: 5`, `max_temp: 30.5`, `cold_tolerance: 0.2`, `hot_tolerance: 0.2`,
-`target_temp_step: 0.5`, failsafe delay `15` minutes, plausibility `5`–`40 °C`.
+Reasonable starting values for underfloor/radiator heating with a slow
+response: `min_temp: 5`, `max_temp: 30.5`, `cold_tolerance: 0.2`,
+`hot_tolerance: 0.2`, `target_temp_step: 0.5`, failsafe delay `15` minutes,
+plausibility `5`–`40 °C`.
 
 ## Migration from `generic_thermostat`
 
-Home Assistant won't let two entities share an entity id, so a direct
-takeover of e.g. `climate.schlafzimmer` isn't possible while the old entity
-still exists. Recommended path, one room at a time:
+If you're coming from Home Assistant's built-in `generic_thermostat` (a very
+common way to build a sensor+switch thermostat before this integration
+existed), note that Home Assistant won't let two entities share an entity
+id, so a direct takeover of e.g. `climate.bedroom` isn't possible while the
+old entity still exists. Recommended path, one room at a time:
 
 1. Keep the existing `generic_thermostat` and its failsafe automation
    running for now.
 2. Add the new thermostat here for the **same room** (it will get an entity
-   id like `climate.thermostat_schlafzimmer`).
+   id like `climate.thermostat_bedroom`).
 3. Verify it for a few days: heating behaviour, hysteresis, humidity, and
    (if used) the schedule.
 4. Go to Settings → Devices & Services → Entities, disable/rename the old
-   `generic_thermostat` entity (e.g. to `climate.schlafzimmer_old`), then
-   rename the new entity's id to `climate.schlafzimmer` from its entity
+   `generic_thermostat` entity (e.g. to `climate.bedroom_old`), then
+   rename the new entity's id to `climate.bedroom` from its entity
    settings dialog. Dashboards and automations referencing the old id keep
    working.
 5. Only now remove the old `generic_thermostat` YAML/config entry and its
