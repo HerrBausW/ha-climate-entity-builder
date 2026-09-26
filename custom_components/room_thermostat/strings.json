@@ -1,0 +1,88 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up Room Thermostat",
+        "description": "This creates the Room Thermostat hub. Afterwards, use \"Add thermostat\" on the integration's device page to configure one virtual thermostat per room."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Room Thermostat is already set up. Add more thermostats via \"Add thermostat\" on the integration's device page."
+    }
+  },
+  "config_subentries": {
+    "thermostat": {
+      "title": "Thermostat",
+      "step": {
+        "user": {
+          "title": "Add thermostat",
+          "description": "Build a virtual room thermostat from existing sensors and a switch.",
+          "data": {
+            "name": "Name",
+            "temperature_sensor": "Temperature sensor",
+            "heater": "Heater output (switch/input_boolean)",
+            "humidity_sensor": "Humidity sensor (optional)",
+            "schedule_entity": "Schedule for auto mode (optional)",
+            "min_temp": "Minimum settable temperature",
+            "max_temp": "Maximum settable temperature",
+            "target_temp_step": "Setpoint step size",
+            "cold_tolerance": "Cold tolerance (turn on below target)",
+            "hot_tolerance": "Hot tolerance (turn off above target)",
+            "min_cycle_duration": "Minimum switch cycle duration (optional)",
+            "comfort_temperature": "Comfort temperature (schedule on)",
+            "eco_temperature": "Eco/setback temperature (schedule off)",
+            "sensor_stale_timeout": "Failsafe delay after invalid sensor reading",
+            "sensor_min_valid_temp": "Plausibility lower bound",
+            "sensor_max_valid_temp": "Plausibility upper bound"
+          },
+          "data_description": {
+            "heater": "Turned on/off via the generic homeassistant.turn_on/turn_off services.",
+            "schedule_entity": "A schedule.* entity. When active, the comfort temperature is used; otherwise the eco temperature.",
+            "min_cycle_duration": "Prevents short-cycling the heater output.",
+            "sensor_stale_timeout": "How long an unavailable/unknown/implausible reading is tolerated before the heater is forced off.",
+            "sensor_min_valid_temp": "Readings below this value are treated as implausible.",
+            "sensor_max_valid_temp": "Readings above this value are treated as implausible."
+          }
+        },
+        "reconfigure": {
+          "title": "Edit thermostat",
+          "description": "Update the configuration of this thermostat.",
+          "data": {
+            "name": "Name",
+            "temperature_sensor": "Temperature sensor",
+            "heater": "Heater output (switch/input_boolean)",
+            "humidity_sensor": "Humidity sensor (optional)",
+            "schedule_entity": "Schedule for auto mode (optional)",
+            "min_temp": "Minimum settable temperature",
+            "max_temp": "Maximum settable temperature",
+            "target_temp_step": "Setpoint step size",
+            "cold_tolerance": "Cold tolerance (turn on below target)",
+            "hot_tolerance": "Hot tolerance (turn off above target)",
+            "min_cycle_duration": "Minimum switch cycle duration (optional)",
+            "comfort_temperature": "Comfort temperature (schedule on)",
+            "eco_temperature": "Eco/setback temperature (schedule off)",
+            "sensor_stale_timeout": "Failsafe delay after invalid sensor reading",
+            "sensor_min_valid_temp": "Plausibility lower bound",
+            "sensor_max_valid_temp": "Plausibility upper bound"
+          }
+        }
+      },
+      "error": {
+        "name_required": "Please enter a name.",
+        "name_exists": "A thermostat with this name already exists.",
+        "min_max_invalid": "The maximum value must be greater than the minimum value."
+      }
+    }
+  },
+  "exceptions": {
+    "auto_mode_temperature_readonly": {
+      "message": "The target temperature is controlled by the schedule while in auto mode. Switch to heat mode to set it manually, or edit the comfort/eco temperature."
+    },
+    "hvac_mode_not_supported": {
+      "message": "HVAC mode {mode} is not supported by this thermostat."
+    },
+    "preset_mode_not_supported": {
+      "message": "Preset {preset} is not supported in the current HVAC mode."
+    }
+  }
+}

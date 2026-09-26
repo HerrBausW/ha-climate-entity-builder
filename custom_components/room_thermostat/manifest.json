@@ -1,0 +1,12 @@
+{
+  "domain": "room_thermostat",
+  "name": "Room Thermostat",
+  "codeowners": ["@HerrBausW"],
+  "config_flow": true,
+  "documentation": "https://github.com/HerrBausW/ha-room-thermostat",
+  "integration_type": "hub",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/HerrBausW/ha-room-thermostat/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

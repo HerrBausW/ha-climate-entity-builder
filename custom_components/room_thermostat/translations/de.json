@@ -1,0 +1,88 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Room Thermostat einrichten",
+        "description": "Hiermit wird der Room-Thermostat-Hub angelegt. Über \"Thermostat hinzufügen\" auf der Geräteseite der Integration richtest du anschließend pro Raum ein virtuelles Thermostat ein."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Room Thermostat ist bereits eingerichtet. Weitere Thermostate über \"Thermostat hinzufügen\" auf der Geräteseite der Integration anlegen."
+    }
+  },
+  "config_subentries": {
+    "thermostat": {
+      "title": "Thermostat",
+      "step": {
+        "user": {
+          "title": "Thermostat hinzufügen",
+          "description": "Baue ein virtuelles Raumthermostat aus vorhandenen Sensoren und einem Schalter.",
+          "data": {
+            "name": "Name",
+            "temperature_sensor": "Temperatursensor",
+            "heater": "Heizungsausgang (switch/input_boolean)",
+            "humidity_sensor": "Luftfeuchtigkeitssensor (optional)",
+            "schedule_entity": "Zeitplan für Auto-Modus (optional)",
+            "min_temp": "Minimale Solltemperatur",
+            "max_temp": "Maximale Solltemperatur",
+            "target_temp_step": "Schrittweite des Sollwerts",
+            "cold_tolerance": "Einschalttoleranz (Heizen unter Sollwert)",
+            "hot_tolerance": "Ausschalttoleranz (Aus über Sollwert)",
+            "min_cycle_duration": "Minimale Schaltzeit (optional)",
+            "comfort_temperature": "Komforttemperatur (Zeitplan aktiv)",
+            "eco_temperature": "Absenktemperatur (Zeitplan inaktiv)",
+            "sensor_stale_timeout": "Failsafe-Verzögerung bei ungültigem Sensorwert",
+            "sensor_min_valid_temp": "Untere Plausibilitätsgrenze",
+            "sensor_max_valid_temp": "Obere Plausibilitätsgrenze"
+          },
+          "data_description": {
+            "heater": "Wird über die generischen Dienste homeassistant.turn_on/turn_off geschaltet.",
+            "schedule_entity": "Eine schedule.*-Entity. Ist sie aktiv, gilt die Komforttemperatur, sonst die Absenktemperatur.",
+            "min_cycle_duration": "Verhindert zu häufiges Takten des Heizungsausgangs.",
+            "sensor_stale_timeout": "Wie lange ein unavailable/unknown/unplausibler Wert toleriert wird, bevor der Ausgang zwangsweise geschlossen wird.",
+            "sensor_min_valid_temp": "Werte unterhalb dieser Grenze gelten als unplausibel.",
+            "sensor_max_valid_temp": "Werte oberhalb dieser Grenze gelten als unplausibel."
+          }
+        },
+        "reconfigure": {
+          "title": "Thermostat bearbeiten",
+          "description": "Konfiguration dieses Thermostats aktualisieren.",
+          "data": {
+            "name": "Name",
+            "temperature_sensor": "Temperatursensor",
+            "heater": "Heizungsausgang (switch/input_boolean)",
+            "humidity_sensor": "Luftfeuchtigkeitssensor (optional)",
+            "schedule_entity": "Zeitplan für Auto-Modus (optional)",
+            "min_temp": "Minimale Solltemperatur",
+            "max_temp": "Maximale Solltemperatur",
+            "target_temp_step": "Schrittweite des Sollwerts",
+            "cold_tolerance": "Einschalttoleranz (Heizen unter Sollwert)",
+            "hot_tolerance": "Ausschalttoleranz (Aus über Sollwert)",
+            "min_cycle_duration": "Minimale Schaltzeit (optional)",
+            "comfort_temperature": "Komforttemperatur (Zeitplan aktiv)",
+            "eco_temperature": "Absenktemperatur (Zeitplan inaktiv)",
+            "sensor_stale_timeout": "Failsafe-Verzögerung bei ungültigem Sensorwert",
+            "sensor_min_valid_temp": "Untere Plausibilitätsgrenze",
+            "sensor_max_valid_temp": "Obere Plausibilitätsgrenze"
+          }
+        }
+      },
+      "error": {
+        "name_required": "Bitte einen Namen eingeben.",
+        "name_exists": "Ein Thermostat mit diesem Namen existiert bereits.",
+        "min_max_invalid": "Der Maximalwert muss größer als der Minimalwert sein."
+      }
+    }
+  },
+  "exceptions": {
+    "auto_mode_temperature_readonly": {
+      "message": "Im Auto-Modus wird der Sollwert vom Zeitplan bestimmt. Für die manuelle Eingabe in den Heizen-Modus wechseln oder die Komfort-/Absenktemperatur anpassen."
+    },
+    "hvac_mode_not_supported": {
+      "message": "Der HVAC-Modus {mode} wird von diesem Thermostat nicht unterstützt."
+    },
+    "preset_mode_not_supported": {
+      "message": "Preset {preset} wird im aktuellen HVAC-Modus nicht unterstützt."
+    }
+  }
+}
