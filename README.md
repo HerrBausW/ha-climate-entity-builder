@@ -29,9 +29,9 @@ The "Add thermostat" subentry form (shown here in German — English is
 available too):
 
 <p align="center">
-  <img src="images/add-thermostat-1.png" width="32%" alt="Add thermostat: name, temperature sensor, heater, humidity sensor, schedule">
-  <img src="images/add-thermostat-2.png" width="32%" alt="Add thermostat: min/max temperature, step, tolerances, comfort/eco temperature">
-  <img src="images/add-thermostat-3.png" width="32%" alt="Add thermostat: minimum cycle duration, failsafe delay, plausibility bounds">
+  <img src="https://raw.githubusercontent.com/HerrBausW/ha-room-thermostat/main/images/add-thermostat-1.png" width="32%" alt="Add thermostat: name, temperature sensor, heater, humidity sensor, schedule">
+  <img src="https://raw.githubusercontent.com/HerrBausW/ha-room-thermostat/main/images/add-thermostat-2.png" width="32%" alt="Add thermostat: min/max temperature, step, tolerances, comfort/eco temperature">
+  <img src="https://raw.githubusercontent.com/HerrBausW/ha-room-thermostat/main/images/add-thermostat-3.png" width="32%" alt="Add thermostat: minimum cycle duration, failsafe delay, plausibility bounds">
 </p>
 
 *(device page and climate card screenshots to follow)*
