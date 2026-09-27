@@ -14,11 +14,14 @@ from homeassistant.helpers.event import async_track_state_change_event
 from .const import (
     CONF_HEATER,
     CONF_NAME,
+    CONF_WINDOW_SENSORS,
     DATA_FAILSAFE_STATES,
+    DATA_WINDOW_OPEN_STATES,
     DOMAIN,
     MANUFACTURER,
     SUBENTRY_TYPE_THERMOSTAT,
     failsafe_signal,
+    window_open_signal,
 )
 
 
@@ -31,13 +34,13 @@ async def async_setup_entry(
     for subentry_id, subentry in entry.subentries.items():
         if subentry.subentry_type != SUBENTRY_TYPE_THERMOSTAT:
             continue
-        async_add_entities(
-            [
-                RoomThermostatHeatingActivity(subentry),
-                RoomThermostatFailsafe(subentry),
-            ],
-            config_subentry_id=subentry_id,
-        )
+        entities: list[RoomThermostatBinarySensor] = [
+            RoomThermostatHeatingActivity(subentry),
+            RoomThermostatFailsafe(subentry),
+        ]
+        if subentry.data.get(CONF_WINDOW_SENSORS):
+            entities.append(RoomThermostatWindowOpen(subentry))
+        async_add_entities(entities, config_subentry_id=subentry_id)
 
 
 class RoomThermostatBinarySensor(BinarySensorEntity):
@@ -129,5 +132,41 @@ class RoomThermostatFailsafe(RoomThermostatBinarySensor):
 
     @callback
     def _async_failsafe_changed(self) -> None:
+        """Update the entity when the climate entity publishes a new state."""
+        self.async_write_ha_state()
+
+
+class RoomThermostatWindowOpen(RoomThermostatBinarySensor):
+    """Expose the thermostat's debounced window-open state."""
+
+    _attr_translation_key = "window_open"
+    _attr_device_class = BinarySensorDeviceClass.WINDOW
+
+    def __init__(self, subentry: ConfigSubentry) -> None:
+        super().__init__(subentry)
+        self._attr_unique_id = f"{subentry.subentry_id}_window_open"
+
+    async def async_added_to_hass(self) -> None:
+        """Listen for window-open state changes from the climate entity."""
+        await super().async_added_to_hass()
+        self.async_on_remove(
+            async_dispatcher_connect(
+                self.hass,
+                window_open_signal(self._subentry_id),
+                self._async_window_open_changed,
+            )
+        )
+
+    @property
+    def is_on(self) -> bool:
+        """Return whether this thermostat currently has a window open."""
+        return bool(
+            self.hass.data.get(DOMAIN, {})
+            .get(DATA_WINDOW_OPEN_STATES, {})
+            .get(self._subentry_id, False)
+        )
+
+    @callback
+    def _async_window_open_changed(self) -> None:
         """Update the entity when the climate entity publishes a new state."""
         self.async_write_ha_state()

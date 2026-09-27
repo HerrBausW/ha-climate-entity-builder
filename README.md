@@ -21,6 +21,7 @@
 - [Modes](#modes)
 - [Hysteresis](#hysteresis)
 - [Failsafe](#failsafe)
+- [Window contacts & frost protection](#window-contacts--frost-protection)
 - [Companion sensors](#companion-sensors)
 - [Known limitations](#known-limitations)
 - [Example configuration](#example-configuration)
@@ -49,8 +50,11 @@ companion sensors, so it fits right into an existing maintenance dashboard.
   where the schedule is the single source of truth for the setpoint).
 - Sensor failsafe with a configurable grace period and plausibility bounds —
   a brief glitch never cuts the heat, a genuinely dead sensor does.
-- Two companion `binary_sensor` entities per thermostat for maintenance
-  dashboards: **heating activity** and **failsafe**.
+- Optional window/door contacts pause heating down to a frost protection
+  temperature — regulated, not just switched fully off.
+- Companion `binary_sensor` entities per thermostat for maintenance
+  dashboards: **heating activity**, **failsafe**, and (if configured)
+  **window open**.
 - The entity id is derived directly from the name you enter (`Bedroom` →
   `climate.bedroom`), matching how people already name a manual thermostat.
 - Fully event-driven (no polling), restores HVAC mode and setpoint across a
@@ -93,8 +97,9 @@ introduced in HA 2025.7).
    - Temperature sensor (`device_class: temperature`)
    - Heater output (a `switch.*` or `input_boolean.*`)
    - Optional: humidity sensor, schedule, min/max temperature, step size,
-     cold/hot tolerance, minimum cycle duration, comfort/eco temperature,
-     failsafe delay and plausibility bounds.
+     cold/hot tolerance, minimum cycle duration, window/door sensors with
+     an open delay and frost protection temperature, comfort/eco
+     temperature, failsafe delay and plausibility bounds.
 3. Repeat step 2 for every room. Each one becomes its own device with a
    `climate.*` entity.
 4. To change a thermostat's configuration later, or to remove it, use the
@@ -144,22 +149,39 @@ forcing the heater output off. A brief glitch that clears within the delay
 never touches the output. Once a valid reading arrives, normal control
 resumes immediately and the failsafe attribute clears.
 
+## Window contacts & frost protection
+
+Optionally select one or more `binary_sensor.*` window/door contacts and a
+frost protection temperature (default 7 °C). While any of them is open (after
+an optional delay, to ignore a quick opening for airing out the room), the
+thermostat regulates against the frost protection temperature instead of the
+normal setpoint — it doesn't just switch fully off, so a real cold snap with
+the window open still gets a minimal amount of heat. This only applies while
+the thermostat is in `heat`/`auto`; if it's `off`, it stays `off` regardless
+of any window.
+
+While paused, the **Voreinstellung**/preset chip on the climate card shows
+**Frost protection** in place of the normal comfort/eco/none value. Your
+actual setpoint and preset underneath are untouched and reassert themselves
+the moment the window closes — nothing to reset manually.
+
 ## Companion sensors
 
-Every thermostat device carries two read-only `binary_sensor` entities
-alongside the `climate` entity, so it slots into a maintenance dashboard the
-same way a wall-mounted thermostat's status entities would:
+Every thermostat device carries read-only `binary_sensor` entities alongside
+the `climate` entity, so it slots into a maintenance dashboard the same way a
+wall-mounted thermostat's status entities would:
 
 | Entity | Reflects | Device class |
 |---|---|---|
 | `binary_sensor.<room>_heizaktivitat` | the real heater output (`switch`/`input_boolean`), not the HVAC mode | — |
 | `binary_sensor.<room>_failsafe` | whether this thermostat's failsafe is currently engaged | `problem` |
+| `binary_sensor.<room>_window_open` | whether this thermostat is currently paused for an open window (only created if window sensors are configured) | `window` |
 
 ## Known limitations
 
 - `auto` mode only supports a single on/off schedule with a comfort and an
   eco temperature — no per-time-slot temperatures, multiple schedules,
-  weekdays, holidays, presence or window sensors yet (see Roadmap).
+  weekdays, holidays or presence yet (see Roadmap).
 - Manually setting a temperature while in `auto` mode is not supported by
   design, to avoid two conflicting ways to pick the setpoint.
 - The heater output must already exist as a `switch.*` or `input_boolean.*`
@@ -216,11 +238,10 @@ and pull request.
 
 ## Roadmap
 
-Not in the MVP, but the architecture leaves room for: window/door contacts
-pausing heating, presence & vacation modes, a timed boost preset, frost
-protection, multiple heater actuators per room, cooling, external temperature
-limiting, valve run-on, per-time-slot schedules with weekdays, and dedicated
-diagnostic/statistics entities.
+Not in the MVP, but the architecture leaves room for: presence & vacation
+modes, a timed boost preset, multiple heater actuators per room, cooling,
+external temperature limiting, valve run-on, per-time-slot schedules with
+weekdays, and dedicated diagnostic/statistics entities.
 
 ## License
 

@@ -44,9 +44,13 @@ from .const import (
     CONF_SENSOR_STALE_TIMEOUT,
     CONF_TARGET_TEMP_STEP,
     CONF_TEMP_SENSOR,
+    CONF_WINDOW_OPEN_DELAY,
+    CONF_WINDOW_SENSORS,
+    CONF_FROST_PROTECTION_TEMP,
     DEFAULT_COLD_TOLERANCE,
     DEFAULT_COMFORT_TEMP,
     DEFAULT_ECO_TEMP,
+    DEFAULT_FROST_PROTECTION_TEMP,
     DEFAULT_HOT_TOLERANCE,
     DEFAULT_MAX_TEMP,
     DEFAULT_MIN_TEMP,
@@ -57,6 +61,9 @@ from .const import (
     DOMAIN,
     SUBENTRY_TYPE_THERMOSTAT,
 )
+
+# device_class filter for the window/door contacts that pause heating.
+WINDOW_SENSOR_DEVICE_CLASSES = ["window", "door", "garage_door", "opening"]
 
 # Switches and input_booleans are both turned on/off through the generic
 # `homeassistant.turn_on` / `turn_off` services, which keeps the door open for
@@ -129,6 +136,29 @@ def _thermostat_data_schema(defaults: Mapping[str, Any]) -> vol.Schema:
             vol.Optional(
                 CONF_MIN_CYCLE_DURATION, default=d(CONF_MIN_CYCLE_DURATION, None)
             ): vol.Any(None, DurationSelector(DurationSelectorConfig(enable_day=False))),
+            vol.Optional(
+                CONF_WINDOW_SENSORS, default=d(CONF_WINDOW_SENSORS, None)
+            ): vol.Any(
+                None,
+                EntitySelector(
+                    EntitySelectorConfig(
+                        domain="binary_sensor",
+                        device_class=WINDOW_SENSOR_DEVICE_CLASSES,
+                        multiple=True,
+                    )
+                ),
+            ),
+            vol.Optional(
+                CONF_WINDOW_OPEN_DELAY, default=d(CONF_WINDOW_OPEN_DELAY, None)
+            ): vol.Any(None, DurationSelector(DurationSelectorConfig(enable_day=False))),
+            vol.Required(
+                CONF_FROST_PROTECTION_TEMP,
+                default=d(CONF_FROST_PROTECTION_TEMP, DEFAULT_FROST_PROTECTION_TEMP),
+            ): NumberSelector(
+                NumberSelectorConfig(
+                    min=-20, max=50, step=0.5, mode=NumberSelectorMode.BOX, unit_of_measurement="°C"
+                )
+            ),
             vol.Required(
                 CONF_COMFORT_TEMP, default=d(CONF_COMFORT_TEMP, DEFAULT_COMFORT_TEMP)
             ): NumberSelector(

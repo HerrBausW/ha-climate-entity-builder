@@ -43,9 +43,11 @@ import homeassistant.util.dt as dt_util
 from .const import (
     ATTR_EFFECTIVE_TARGET_TEMPERATURE,
     ATTR_FAILSAFE_ACTIVE,
+    ATTR_WINDOW_OPEN,
     CONF_COLD_TOLERANCE,
     CONF_COMFORT_TEMP,
     CONF_ECO_TEMP,
+    CONF_FROST_PROTECTION_TEMP,
     CONF_HEATER,
     CONF_HOT_TOLERANCE,
     CONF_HUMIDITY_SENSOR,
@@ -59,11 +61,16 @@ from .const import (
     CONF_SENSOR_STALE_TIMEOUT,
     CONF_TARGET_TEMP_STEP,
     CONF_TEMP_SENSOR,
+    CONF_WINDOW_OPEN_DELAY,
+    CONF_WINDOW_SENSORS,
     DATA_FAILSAFE_STATES,
+    DATA_WINDOW_OPEN_STATES,
     DOMAIN,
     MANUFACTURER,
+    PRESET_FROST_PROTECTION,
     SUBENTRY_TYPE_THERMOSTAT,
     failsafe_signal,
+    window_open_signal,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -133,6 +140,16 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
             timedelta(**raw_cycle) if raw_cycle else None
         )
 
+        raw_window_sensors = data.get(CONF_WINDOW_SENSORS)
+        self._window_sensor_entity_ids: list[str] = (
+            list(raw_window_sensors) if raw_window_sensors else []
+        )
+        raw_window_delay = data.get(CONF_WINDOW_OPEN_DELAY)
+        self._window_open_delay: timedelta | None = (
+            timedelta(**raw_window_delay) if raw_window_delay else None
+        )
+        self._frost_protection_temp: float = data[CONF_FROST_PROTECTION_TEMP]
+
         self._attr_hvac_mode: HVACMode = HVACMode.OFF
         self._attr_target_temperature: float = self._comfort_temp
         self._attr_preset_mode: str = PRESET_NONE
@@ -142,6 +159,8 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
         self._sensor_valid = False
         self._failsafe_active = False
         self._failsafe_unsub: CALLBACK_TYPE | None = None
+        self._window_open = False
+        self._window_open_unsub: CALLBACK_TYPE | None = None
         self._last_decision = "init"
 
     # --- restore / setup -----------------------------------------------------
@@ -167,6 +186,8 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
         self._handle_temperature_state(self.hass.states.get(self._temp_sensor_entity_id))
         if self._humidity_sensor_entity_id:
             self._handle_humidity_state(self.hass.states.get(self._humidity_sensor_entity_id))
+        if self._window_sensor_entity_ids:
+            self._handle_window_state()
 
         self.async_on_remove(
             async_track_state_change_event(
@@ -192,7 +213,16 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
                     self.hass, [self._schedule_entity_id], self._async_schedule_changed
                 )
             )
+        if self._window_sensor_entity_ids:
+            self.async_on_remove(
+                async_track_state_change_event(
+                    self.hass,
+                    self._window_sensor_entity_ids,
+                    self._async_window_sensor_changed,
+                )
+            )
         self.async_on_remove(self._cancel_failsafe_timer)
+        self.async_on_remove(self._cancel_window_open_timer)
 
         await self._async_control_heating()
 
@@ -214,6 +244,17 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
         return HVACAction.HEATING if self._is_heater_on() else HVACAction.IDLE
 
     @property
+    def preset_mode(self) -> str:
+        # Not user-selectable (absent from preset_modes below); only ever
+        # shown while a configured window/door sensor is holding the
+        # thermostat at the frost protection temperature. The user's real
+        # preset/target underneath is untouched and reasserts itself the
+        # moment the window closes.
+        if self._window_open and self._attr_hvac_mode != HVACMode.OFF:
+            return PRESET_FROST_PROTECTION
+        return self._attr_preset_mode
+
+    @property
     def preset_modes(self) -> list[str]:
         if self._attr_hvac_mode == HVACMode.HEAT:
             return [PRESET_NONE, PRESET_COMFORT, PRESET_ECO]
@@ -233,7 +274,10 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        attrs: dict[str, Any] = {ATTR_FAILSAFE_ACTIVE: self._failsafe_active}
+        attrs: dict[str, Any] = {
+            ATTR_FAILSAFE_ACTIVE: self._failsafe_active,
+            ATTR_WINDOW_OPEN: self._window_open,
+        }
         if self._attr_hvac_mode == HVACMode.AUTO:
             attrs[ATTR_EFFECTIVE_TARGET_TEMPERATURE] = self._effective_target_temperature
         return attrs
@@ -376,6 +420,53 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
             context=self._context,
         )
 
+    def _set_window_open(self, open_: bool) -> None:
+        """Publish the debounced window-open state for the companion binary sensor."""
+        window_states = self.hass.data.setdefault(DOMAIN, {}).setdefault(
+            DATA_WINDOW_OPEN_STATES, {}
+        )
+        previous = window_states.get(self._subentry_id)
+        self._window_open = open_
+        window_states[self._subentry_id] = open_
+        if previous != open_:
+            async_dispatcher_send(self.hass, window_open_signal(self._subentry_id))
+
+    def _is_any_window_open(self) -> bool:
+        for entity_id in self._window_sensor_entity_ids:
+            state = self.hass.states.get(entity_id)
+            if state is not None and state.state == STATE_ON:
+                return True
+        return False
+
+    def _handle_window_state(self) -> None:
+        """Re-evaluate the debounced window-open state from current readings."""
+        if self._is_any_window_open():
+            if self._window_open or self._window_open_unsub is not None:
+                return
+            if self._window_open_delay:
+                self._window_open_unsub = async_call_later(
+                    self.hass, self._window_open_delay, self._async_window_open_confirmed
+                )
+            else:
+                self._set_window_open(True)
+        else:
+            self._cancel_window_open_timer()
+            if self._window_open:
+                self._set_window_open(False)
+
+    def _cancel_window_open_timer(self) -> None:
+        if self._window_open_unsub is not None:
+            self._window_open_unsub()
+            self._window_open_unsub = None
+
+    @callback
+    def _async_window_open_confirmed(self, _now: Any) -> None:
+        self._window_open_unsub = None
+        if not self._is_any_window_open():
+            return  # closed again before the delay elapsed
+        self._set_window_open(True)
+        self.hass.async_create_task(self._async_recontrol())
+
     def _schedule_active(self) -> bool:
         if not self._schedule_entity_id:
             return False
@@ -386,6 +477,10 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
 
     @property
     def _effective_target_temperature(self) -> float | None:
+        if self._attr_hvac_mode == HVACMode.OFF:
+            return None
+        if self._window_open:
+            return self._frost_protection_temp
         if self._attr_hvac_mode == HVACMode.AUTO:
             return self._comfort_temp if self._schedule_active() else self._eco_temp
         if self._attr_hvac_mode == HVACMode.HEAT:
@@ -459,3 +554,14 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
     @callback
     def _async_schedule_changed(self, event: Event[EventStateChangedData]) -> None:
         self.hass.async_create_task(self._async_recontrol())
+
+    @callback
+    def _async_window_sensor_changed(
+        self, event: Event[EventStateChangedData]
+    ) -> None:
+        was_open = self._window_open
+        self._handle_window_state()
+        if self._window_open != was_open:
+            self.hass.async_create_task(self._async_recontrol())
+        else:
+            self.async_write_ha_state()

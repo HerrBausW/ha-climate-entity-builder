@@ -26,6 +26,9 @@ CONF_ECO_TEMP = "eco_temperature"
 CONF_SENSOR_STALE_TIMEOUT = "sensor_stale_timeout"
 CONF_SENSOR_MIN_VALID = "sensor_min_valid_temp"
 CONF_SENSOR_MAX_VALID = "sensor_max_valid_temp"
+CONF_WINDOW_SENSORS = "window_sensors"
+CONF_WINDOW_OPEN_DELAY = "window_open_delay"
+CONF_FROST_PROTECTION_TEMP = "frost_protection_temperature"
 
 # --- Defaults ----------------------------------------------------------------
 
@@ -39,6 +42,7 @@ DEFAULT_ECO_TEMP = 18.0
 DEFAULT_SENSOR_STALE_TIMEOUT_MINUTES = 15
 DEFAULT_SENSOR_MIN_VALID_TEMP = 5.0
 DEFAULT_SENSOR_MAX_VALID_TEMP = 40.0
+DEFAULT_FROST_PROTECTION_TEMP = 7.0
 
 # --- Presets -------------------------------------------------------------------
 # Presets are only ever offered while hvac_mode == HEAT. In AUTO mode the
@@ -48,16 +52,29 @@ DEFAULT_SENSOR_MAX_VALID_TEMP = 40.0
 PRESET_COMFORT_MODE = PRESET_COMFORT
 PRESET_ECO_MODE = PRESET_ECO
 
+# A window sensor pause is shown via this preset (not user-selectable, only
+# ever returned while a configured window/door sensor is open) instead of
+# forcing hvac_action to "off", so the thermostat keeps regulating against
+# the frost protection temperature rather than going fully inert.
+PRESET_FROST_PROTECTION = "frost_protection"
+
 # --- Runtime state / attributes -------------------------------------------------
 
 ATTR_EFFECTIVE_TARGET_TEMPERATURE = "effective_target_temperature"
 ATTR_FAILSAFE_ACTIVE = "failsafe_active"
+ATTR_WINDOW_OPEN = "window_open"
 DATA_FAILSAFE_STATES = "failsafe_states"
+DATA_WINDOW_OPEN_STATES = "window_open_states"
 
 
 def failsafe_signal(subentry_id: str) -> str:
     """Return the dispatcher signal for a thermostat failsafe state."""
     return f"{DOMAIN}_failsafe_{subentry_id}"
+
+
+def window_open_signal(subentry_id: str) -> str:
+    """Return the dispatcher signal for a thermostat's window-open state."""
+    return f"{DOMAIN}_window_open_{subentry_id}"
 
 
 MANUFACTURER = "Climate Entity Builder"
