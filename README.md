@@ -102,6 +102,13 @@ introduced in HA 2025.7).
 
 ## Modes
 
+The resulting `climate` entity behaves like a native thermostat, including
+Home Assistant's standard dial card:
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/HerrBausW/ha-climate-entity-builder/main/images/climate-card.png" width="360" alt="Native Home Assistant climate card for a Climate Entity Builder thermostat, showing current temperature, humidity, setpoint dial and HVAC mode">
+</p>
+
 - **off** — heater output is always held off.
 - **heat** — you set `target_temperature` manually; the heater is switched
   by hysteresis around that value (see below).
