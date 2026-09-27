@@ -3,63 +3,64 @@
 [![Test](https://github.com/HerrBausW/ha-climate-entity-builder/actions/workflows/test.yml/badge.svg)](https://github.com/HerrBausW/ha-climate-entity-builder/actions/workflows/test.yml)
 [![Validate](https://github.com/HerrBausW/ha-climate-entity-builder/actions/workflows/validate.yml/badge.svg)](https://github.com/HerrBausW/ha-climate-entity-builder/actions/workflows/validate.yml)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A Home Assistant custom integration that builds a full virtual room thermostat
-out of entities you already have: a temperature sensor, a switch (your heating
-valve/relay), and optionally a humidity sensor and a `schedule.*` entity.
+**Turn any temperature sensor and switch into a full-featured virtual thermostat — no YAML, entirely through the Home Assistant UI.**
 
-## Requirements
+<p align="center">
+  <img src="https://raw.githubusercontent.com/HerrBausW/ha-climate-entity-builder/main/images/integration-overview.png" width="720" alt="Climate Entity Builder integration page: one hub with a device per room, each a Virtual Room Thermostat with 3 entities">
+</p>
 
-Home Assistant **2025.9 or newer** (this integration relies on
-[config subentries](https://developers.home-assistant.io/docs/config_entries_config_flow_handler/#config-subentries),
-introduced in HA 2025.7).
+## Contents
+
+- [Why](#why)
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Setup](#setup)
+- [Modes](#modes)
+- [Hysteresis](#hysteresis)
+- [Failsafe](#failsafe)
+- [Companion sensors](#companion-sensors)
+- [Known limitations](#known-limitations)
+- [Example configuration](#example-configuration)
+- [Migration from `generic_thermostat`](#migration-from-generic_thermostat)
+- [Development / tests](#development--tests)
+- [Roadmap](#roadmap)
 
 ## Why
 
 Home Assistant's built-in [`generic_thermostat`](https://www.home-assistant.io/integrations/generic_thermostat/)
 covers the basic sensor+switch case, but it can't show the room's humidity on
 the same `climate` entity, has no built-in failsafe for a dead sensor, and
-needs YAML. Climate Entity Builder is configured entirely through the UI (Config
-Flow + Subentries) and gives every room its own device with a single
-`climate` entity that behaves like a native thermostat.
-
-## Screenshots
-
-The "Add thermostat" subentry form (shown here in German — English is
-available too):
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/HerrBausW/ha-climate-entity-builder/main/images/add-thermostat-1.png" width="32%" alt="Add thermostat: name, temperature sensor, heater, humidity sensor, schedule">
-  <img src="https://raw.githubusercontent.com/HerrBausW/ha-climate-entity-builder/main/images/add-thermostat-2.png" width="32%" alt="Add thermostat: min/max temperature, step, tolerances, comfort/eco temperature">
-  <img src="https://raw.githubusercontent.com/HerrBausW/ha-climate-entity-builder/main/images/add-thermostat-3.png" width="32%" alt="Add thermostat: minimum cycle duration, failsafe delay, plausibility bounds">
-</p>
-
-*(device page and climate card screenshots to follow)*
+needs YAML. **Climate Entity Builder** is configured entirely through the UI
+(Config Flow + Subentries) and gives every room its own device with a single
+`climate` entity that behaves like a native thermostat — plus a couple of
+companion sensors, so it fits right into an existing maintenance dashboard.
 
 ## Features
 
-- One **Climate Entity Builder** hub integration, with one **sub-entry per room** —
-  each room gets its own device in the Device Registry.
-- `off` / `heat` / `auto` HVAC modes.
-- `heat`: manual setpoint with configurable hysteresis (cold/hot tolerance).
-- `auto`: uses an existing `schedule.*` entity — comfort temperature while the
-  schedule is on, eco/setback temperature while it's off.
+- One **Climate Entity Builder** hub, one **sub-entry per room** — each room
+  gets its own device in the Device Registry, named exactly what you type.
+- `off` / `heat` / `auto` HVAC modes, with configurable hysteresis in `heat`
+  and a schedule-driven setpoint in `auto`.
+- Optional humidity sensor, shown as `current_humidity` on the same entity.
 - Optional `comfort`/`eco` presets while in `heat` mode (hidden in `auto`,
   where the schedule is the single source of truth for the setpoint).
-- Optional humidity sensor, shown as `current_humidity` on the same entity.
-- Sensor failsafe: an `unavailable`/`unknown`/implausible reading closes the
-  heater output after a configurable delay — but only after that delay, so a
-  short glitch doesn't cut the heat.
-- Two read-only companion `binary_sensor` entities per thermostat, matching
-  the status entities many wall-mounted/maintenance dashboards expect: a
-  **heating activity** sensor mirroring the real heater output, and a
-  **failsafe** problem sensor mirroring the climate entity's own failsafe
-  state.
-- The entity id is derived directly from the name you enter (e.g. `Bedroom`
-  → `climate.bedroom`), matching how most people already name a manually
-  built thermostat.
-- Fully event-driven (no polling).
-- Restores HVAC mode and manual setpoint after a Home Assistant restart.
+- Sensor failsafe with a configurable grace period and plausibility bounds —
+  a brief glitch never cuts the heat, a genuinely dead sensor does.
+- Two companion `binary_sensor` entities per thermostat for maintenance
+  dashboards: **heating activity** and **failsafe**.
+- The entity id is derived directly from the name you enter (`Bedroom` →
+  `climate.bedroom`), matching how people already name a manual thermostat.
+- Fully event-driven (no polling), restores HVAC mode and setpoint across a
+  Home Assistant restart.
+
+## Requirements
+
+Home Assistant **2025.9 or newer** (this integration relies on
+[config subentries](https://developers.home-assistant.io/docs/config_entries_config_flow_handler/#config-subentries),
+introduced in HA 2025.7).
 
 ## Installation
 
@@ -81,6 +82,13 @@ available too):
 1. Settings → Devices & Services → Add Integration → **Climate Entity Builder**.
    This creates the hub (only one is needed/allowed).
 2. On the integration's page, click **Add thermostat** and fill in the form:
+
+   <p align="center">
+     <img src="https://raw.githubusercontent.com/HerrBausW/ha-climate-entity-builder/main/images/add-thermostat-1.png" width="31%" alt="Add thermostat: name, temperature sensor, heater, humidity sensor, schedule">
+     <img src="https://raw.githubusercontent.com/HerrBausW/ha-climate-entity-builder/main/images/add-thermostat-2.png" width="31%" alt="Add thermostat: min/max temperature, step, tolerances, comfort/eco temperature">
+     <img src="https://raw.githubusercontent.com/HerrBausW/ha-climate-entity-builder/main/images/add-thermostat-3.png" width="31%" alt="Add thermostat: minimum cycle duration, failsafe delay, plausibility bounds">
+   </p>
+
    - Name (e.g. `Kitchen`)
    - Temperature sensor (`device_class: temperature`)
    - Heater output (a `switch.*` or `input_boolean.*`)
@@ -128,6 +136,17 @@ integration waits for the configured delay (default 15 minutes) before
 forcing the heater output off. A brief glitch that clears within the delay
 never touches the output. Once a valid reading arrives, normal control
 resumes immediately and the failsafe attribute clears.
+
+## Companion sensors
+
+Every thermostat device carries two read-only `binary_sensor` entities
+alongside the `climate` entity, so it slots into a maintenance dashboard the
+same way a wall-mounted thermostat's status entities would:
+
+| Entity | Reflects | Device class |
+|---|---|---|
+| `binary_sensor.<room>_heizaktivitat` | the real heater output (`switch`/`input_boolean`), not the HVAC mode | — |
+| `binary_sensor.<room>_failsafe` | whether this thermostat's failsafe is currently engaged | `problem` |
 
 ## Known limitations
 
