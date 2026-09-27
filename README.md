@@ -175,7 +175,7 @@ wall-mounted thermostat's status entities would:
 |---|---|---|
 | `binary_sensor.<room>_heizaktivitat` | the real heater output (`switch`/`input_boolean`), not the HVAC mode | — |
 | `binary_sensor.<room>_failsafe` | whether this thermostat's failsafe is currently engaged | `problem` |
-| `binary_sensor.<room>_window_open` | whether this thermostat is currently paused for an open window (only created if window sensors are configured) | `window` |
+| `binary_sensor.<room>_window_open` | whether heating is currently paused for an open window, i.e. after the configured delay has elapsed — not a live mirror of the raw contact sensor (only created if window sensors are configured) | `window` |
 
 ## Known limitations
 

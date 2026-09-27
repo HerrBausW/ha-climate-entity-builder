@@ -110,7 +110,7 @@
         "name": "Failsafe"
       },
       "window_open": {
-        "name": "Window open"
+        "name": "Window pause active"
       }
     }
   }
