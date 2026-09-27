@@ -27,7 +27,6 @@ CONF_SENSOR_STALE_TIMEOUT = "sensor_stale_timeout"
 CONF_SENSOR_MIN_VALID = "sensor_min_valid_temp"
 CONF_SENSOR_MAX_VALID = "sensor_max_valid_temp"
 CONF_WINDOW_SENSOR = "window_sensor"
-CONF_WINDOW_SENSOR_2 = "window_sensor_2"
 CONF_WINDOW_OPEN_DELAY = "window_open_delay"
 CONF_FROST_PROTECTION_TEMP = "frost_protection_temperature"
 
