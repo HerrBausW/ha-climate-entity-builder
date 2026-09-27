@@ -49,6 +49,7 @@ from .const import (
     CONF_ECO_TEMP,
     CONF_FROST_PROTECTION_TEMP,
     CONF_HEATER,
+    DEFAULT_FROST_PROTECTION_TEMP,
     CONF_HOT_TOLERANCE,
     CONF_HUMIDITY_SENSOR,
     CONF_MAX_TEMP,
@@ -148,7 +149,12 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
         self._window_open_delay: timedelta | None = (
             timedelta(**raw_window_delay) if raw_window_delay else None
         )
-        self._frost_protection_temp: float = data[CONF_FROST_PROTECTION_TEMP]
+        # .get() with a fallback, not data[...]: subentries created before
+        # this field existed (pre-0.2.0) don't have it in their stored data,
+        # and a KeyError here used to take down the whole climate platform.
+        self._frost_protection_temp: float = data.get(
+            CONF_FROST_PROTECTION_TEMP, DEFAULT_FROST_PROTECTION_TEMP
+        )
 
         self._attr_hvac_mode: HVACMode = HVACMode.OFF
         self._attr_target_temperature: float = self._comfort_temp
