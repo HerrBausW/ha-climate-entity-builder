@@ -45,7 +45,7 @@ from .const import (
     CONF_TARGET_TEMP_STEP,
     CONF_TEMP_SENSOR,
     CONF_WINDOW_OPEN_DELAY,
-    CONF_WINDOW_SENSOR,
+    CONF_WINDOW_SENSORS,
     CONF_FROST_PROTECTION_TEMP,
     DEFAULT_COLD_TOLERANCE,
     DEFAULT_COMFORT_TEMP,
@@ -133,16 +133,16 @@ def _thermostat_data_schema(defaults: Mapping[str, Any]) -> vol.Schema:
             vol.Optional(
                 CONF_MIN_CYCLE_DURATION, default=d(CONF_MIN_CYCLE_DURATION, None)
             ): vol.Any(None, DurationSelector(DurationSelectorConfig(enable_day=False))),
-            # A single entity (not a multi-select: at least one HA frontend
-            # version fails to render an EntitySelector at all once
-            # `multiple: true` is set, even with a valid backend schema).
-            # For more than one window, point the user at a binary_sensor
-            # Group helper ("any" logic) instead of building our own
-            # multi-entity picker -- see data_description below.
+            # Plain vol.Optional with a [] default, NOT wrapped in
+            # vol.Any(None, ...): that None-union (needed for single-entity
+            # optional fields elsewhere in this schema) is what broke
+            # rendering together with multiple=True. This mirrors exactly
+            # how Home Assistant's own Group helper defines its multi-entity
+            # picker (homeassistant/components/group/config_flow.py).
             vol.Optional(
-                CONF_WINDOW_SENSOR, default=d(CONF_WINDOW_SENSOR, None)
-            ): vol.Any(
-                None, EntitySelector(EntitySelectorConfig(domain="binary_sensor"))
+                CONF_WINDOW_SENSORS, default=d(CONF_WINDOW_SENSORS, [])
+            ): EntitySelector(
+                EntitySelectorConfig(domain="binary_sensor", multiple=True, reorder=True)
             ),
             vol.Optional(
                 CONF_WINDOW_OPEN_DELAY, default=d(CONF_WINDOW_OPEN_DELAY, None)

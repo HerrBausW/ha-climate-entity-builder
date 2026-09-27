@@ -14,7 +14,7 @@ from homeassistant.helpers.event import async_track_state_change_event
 from .const import (
     CONF_HEATER,
     CONF_NAME,
-    CONF_WINDOW_SENSOR,
+    CONF_WINDOW_SENSORS,
     DATA_FAILSAFE_STATES,
     DATA_WINDOW_OPEN_STATES,
     DOMAIN,
@@ -38,7 +38,7 @@ async def async_setup_entry(
             RoomThermostatHeatingActivity(subentry),
             RoomThermostatFailsafe(subentry),
         ]
-        if subentry.data.get(CONF_WINDOW_SENSOR):
+        if subentry.data.get(CONF_WINDOW_SENSORS):
             entities.append(RoomThermostatWindowOpen(subentry))
         async_add_entities(entities, config_subentry_id=subentry_id)
 

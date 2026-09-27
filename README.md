@@ -97,8 +97,8 @@ introduced in HA 2025.7).
    - Temperature sensor (`device_class: temperature`)
    - Heater output (a `switch.*` or `input_boolean.*`)
    - Optional: humidity sensor, schedule, min/max temperature, step size,
-     cold/hot tolerance, minimum cycle duration, a window/door sensor
-     with an open delay and frost protection temperature, comfort/eco
+     cold/hot tolerance, minimum cycle duration, window/door sensors with
+     an open delay and frost protection temperature, comfort/eco
      temperature, failsafe delay and plausibility bounds.
 3. Repeat step 2 for every room. Each one becomes its own device with a
    `climate.*` entity.
@@ -151,19 +151,14 @@ resumes immediately and the failsafe attribute clears.
 
 ## Window contacts & frost protection
 
-Optionally select a `binary_sensor.*` window/door contact and a frost
-protection temperature (default 7 °C). While it's open (after an optional
-delay, to ignore a quick opening for airing out the room), the thermostat
-regulates against the frost protection temperature instead of the normal
-setpoint — it doesn't just switch fully off, so a real cold snap with the
-window open still gets a minimal amount of heat. This only applies while the
-thermostat is in `heat`/`auto`; if it's `off`, it stays `off` regardless of
-any window.
-
-For more than one window, don't wire them up separately — create a
-`binary_sensor` **Group helper** (Settings → Devices & Services → Helpers →
-Group → Binary sensor, logic "Any state") combining the individual contacts,
-and select that single group entity here instead.
+Optionally select one or more `binary_sensor.*` window/door contacts and a
+frost protection temperature (default 7 °C). While any of them is open (after
+an optional delay, to ignore a quick opening for airing out the room), the
+thermostat regulates against the frost protection temperature instead of the
+normal setpoint — it doesn't just switch fully off, so a real cold snap with
+the window open still gets a minimal amount of heat. This only applies while
+the thermostat is in `heat`/`auto`; if it's `off`, it stays `off` regardless
+of any window.
 
 While paused, the **Voreinstellung**/preset chip on the climate card shows
 **Frost protection** in place of the normal comfort/eco/none value. Your
@@ -191,10 +186,6 @@ wall-mounted thermostat's status entities would:
   design, to avoid two conflicting ways to pick the setpoint.
 - The heater output must already exist as a `switch.*` or `input_boolean.*`
   entity; multiple actuators per room are not yet supported.
-- Only one window/door sensor field per thermostat (a single-select
-  field, not a multi-select list, to sidestep a rendering issue in some
-  HA frontend versions) — combine several windows in a Group helper
-  first if you need more than one.
 
 ## Example configuration
 

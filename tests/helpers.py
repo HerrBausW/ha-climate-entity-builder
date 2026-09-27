@@ -32,7 +32,8 @@ TEMP_SENSOR = "sensor.schlafzimmer_temperatur"
 HUMIDITY_SENSOR = "sensor.schlafzimmer_luftfeuchtigkeit"
 HEATER = "input_boolean.schlafzimmer_heizventil"
 SCHEDULE = "schedule.heizung_schlafzimmer"
-WINDOW_SENSOR = "binary_sensor.schlafzimmer_fenster"
+WINDOW_SENSOR = "binary_sensor.schlafzimmer_fenster_links"
+WINDOW_SENSOR_2 = "binary_sensor.schlafzimmer_fenster_rechts"
 
 
 def thermostat_data(**overrides: Any) -> dict[str, Any]:

@@ -20,6 +20,7 @@ from .helpers import (
     HEATER,
     TEMP_SENSOR,
     WINDOW_SENSOR,
+    WINDOW_SENSOR_2,
     async_setup_base,
     make_hub_entry,
     thermostat_subentry,
@@ -58,7 +59,7 @@ async def test_window_open_switches_to_frost_protection(hass) -> None:
     """Item: opening a window pauses heating at the frost protection target."""
     await async_setup_base(hass, temperature=19.0)
     hass.states.async_set(WINDOW_SENSOR, "off")
-    await _setup(hass, window_sensor=WINDOW_SENSOR)
+    await _setup(hass, window_sensors=[WINDOW_SENSOR])
     await _set_hvac_mode(hass, HVACMode.HEAT)
     await _set_temperature(hass, 21.0)
     await hass.async_block_till_done()
@@ -75,11 +76,39 @@ async def test_window_open_switches_to_frost_protection(hass) -> None:
     assert hass.states.get(HEATER).state == "off"
 
 
+async def test_second_window_sensor_also_triggers_pause(hass) -> None:
+    """Item: with two configured sensors, either one opening pauses heating."""
+    await async_setup_base(hass, temperature=19.0)
+    hass.states.async_set(WINDOW_SENSOR, "off")
+    hass.states.async_set(WINDOW_SENSOR_2, "off")
+    await _setup(hass, window_sensors=[WINDOW_SENSOR, WINDOW_SENSOR_2])
+    await _set_hvac_mode(hass, HVACMode.HEAT)
+    await _set_temperature(hass, 21.0)
+    await hass.async_block_till_done()
+    assert hass.states.get(HEATER).state == "on"
+
+    # only the second sensor opens; the first stays closed
+    hass.states.async_set(WINDOW_SENSOR_2, "on")
+    await hass.async_block_till_done()
+
+    state = hass.states.get(CLIMATE_ENTITY_ID)
+    assert state.attributes[ATTR_WINDOW_OPEN] is True
+    assert state.attributes[ATTR_TEMPERATURE] == 7.0
+
+    # closing it (while the first is still closed) resumes normal control
+    hass.states.async_set(WINDOW_SENSOR_2, "off")
+    await hass.async_block_till_done()
+
+    state = hass.states.get(CLIMATE_ENTITY_ID)
+    assert state.attributes[ATTR_WINDOW_OPEN] is False
+    assert state.attributes[ATTR_TEMPERATURE] == 21.0
+
+
 async def test_window_close_restores_previous_setpoint(hass) -> None:
     """Item: closing the window reverts to the setpoint that was active before."""
     await async_setup_base(hass, temperature=19.0)
     hass.states.async_set(WINDOW_SENSOR, "off")
-    await _setup(hass, window_sensor=WINDOW_SENSOR)
+    await _setup(hass, window_sensors=[WINDOW_SENSOR])
     await _set_hvac_mode(hass, HVACMode.HEAT)
     await _set_temperature(hass, 21.0)
     await hass.async_block_till_done()
@@ -102,7 +131,7 @@ async def test_window_open_ignored_while_hvac_off(hass) -> None:
     """Item: an open window must not force heating on when the mode is off."""
     await async_setup_base(hass, temperature=19.0)
     hass.states.async_set(WINDOW_SENSOR, "off")
-    await _setup(hass, window_sensor=WINDOW_SENSOR)
+    await _setup(hass, window_sensors=[WINDOW_SENSOR])
     await hass.async_block_till_done()
     assert hass.states.get(HEATER).state == "off"
 
@@ -119,7 +148,7 @@ async def test_brief_window_opening_within_delay_is_ignored(hass) -> None:
     await async_setup_base(hass, temperature=19.0)
     hass.states.async_set(WINDOW_SENSOR, "off")
     await _setup(
-        hass, window_sensor=WINDOW_SENSOR, window_open_delay={"minutes": 5}
+        hass, window_sensors=[WINDOW_SENSOR], window_open_delay={"minutes": 5}
     )
     await _set_hvac_mode(hass, HVACMode.HEAT)
     await _set_temperature(hass, 21.0)
@@ -142,7 +171,7 @@ async def test_window_open_past_delay_pauses_heating(hass) -> None:
     await async_setup_base(hass, temperature=19.0)
     hass.states.async_set(WINDOW_SENSOR, "off")
     await _setup(
-        hass, window_sensor=WINDOW_SENSOR, window_open_delay={"minutes": 5}
+        hass, window_sensors=[WINDOW_SENSOR], window_open_delay={"minutes": 5}
     )
     await _set_hvac_mode(hass, HVACMode.HEAT)
     await _set_temperature(hass, 21.0)
@@ -165,7 +194,7 @@ async def test_window_open_binary_sensor_mirrors_state(hass) -> None:
     """Item: the companion window_open binary sensor tracks the debounced state."""
     await async_setup_base(hass, temperature=19.0)
     hass.states.async_set(WINDOW_SENSOR, "off")
-    entry = await _setup(hass, window_sensor=WINDOW_SENSOR)
+    entry = await _setup(hass, window_sensors=[WINDOW_SENSOR])
     subentry_id = next(iter(entry.subentries))
 
     registry = er.async_get(hass)
