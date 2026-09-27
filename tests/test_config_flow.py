@@ -144,26 +144,35 @@ def test_window_sensors_default_is_never_none() -> None:
     )
 
 
-async def test_reconfigure_without_window_sensors_never_persists_none(hass) -> None:
-    """Submitting the form with no window sensor selected must store [], not None.
+async def test_reconfigure_self_heals_stale_none_window_sensors(hass) -> None:
+    """A thermostat with a legacy `window_sensors: None` must self-heal on save.
 
-    Otherwise the next Reconfigure of this same thermostat re-breaks the
-    multi-select field, since a stored None (not a missing key) is what
-    causes it to fail to render.
+    Mirrors the exact live bug: a thermostat saved under an older schema
+    version had a literal None stored (not a missing key) for this field.
+    The frontend's own selector can no longer submit None going forward
+    (its validator no longer accepts it), so the only way stale None data
+    exists is data persisted before this fix - reproduced here directly on
+    the stored subentry rather than through the flow's own validation.
     """
-    entry = make_hub_entry(subentries=[thermostat_subentry()])
+    entry = make_hub_entry(
+        subentries=[thermostat_subentry(**{CONF_WINDOW_SENSORS: None})]
+    )
     entry.add_to_hass(hass)
     subentry = next(iter(entry.subentries.values()))
+    assert subentry.data[CONF_WINDOW_SENSORS] is None
 
     result = await hass.config_entries.subentries.async_init(
         (entry.entry_id, SUBENTRY_TYPE_THERMOSTAT),
         context={"source": SOURCE_RECONFIGURE, "subentry_id": subentry.subentry_id},
     )
-    new_data = thermostat_data(**{CONF_WINDOW_SENSORS: None})
+    assert result["type"] is FlowResultType.FORM
+    assert _marker_default(result["data_schema"], CONF_WINDOW_SENSORS) == []
+
     result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], new_data
+        result["flow_id"], thermostat_data()
     )
     assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "reconfigure_successful"
 
     updated = entry.subentries[subentry.subentry_id]
     assert updated.data[CONF_WINDOW_SENSORS] == []
