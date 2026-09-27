@@ -105,6 +105,17 @@
     }
   },
   "entity": {
+    "climate": {
+      "thermostat": {
+        "state_attributes": {
+          "preset_mode": {
+            "state": {
+              "frost_protection": "Frost protection"
+            }
+          }
+        }
+      }
+    },
     "binary_sensor": {
       "heating_activity": {
         "name": "Heating activity"

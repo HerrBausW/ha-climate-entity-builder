@@ -12,6 +12,7 @@ from homeassistant.components.climate import (
 )
 from homeassistant.const import ATTR_TEMPERATURE
 from homeassistant.core import State
+from homeassistant.helpers import entity_registry as er
 import homeassistant.util.dt as dt_util
 from pytest_homeassistant_custom_component.common import (
     async_fire_time_changed,
@@ -121,6 +122,22 @@ async def test_auto_mode_uses_eco_when_schedule_off(hass) -> None:
     state = hass.states.get(CLIMATE_ENTITY_ID)
     assert state.attributes[ATTR_TEMPERATURE] == 18.0
     assert hass.states.get(HEATER).state == "off"
+
+
+async def test_translation_key_set_for_custom_preset_state_translation(hass) -> None:
+    """A translation_key is required for the frost_protection preset label.
+
+    Without it, HA has no shared translation for our custom preset value and
+    the frontend displays the raw "frost_protection" string everywhere,
+    while the standard none/comfort/eco presets keep resolving via HA's own
+    shared climate translations regardless of this key.
+    """
+    await async_setup_base(hass)
+    await _setup(hass)
+
+    registry = er.async_get(hass)
+    entry = registry.async_get(CLIMATE_ENTITY_ID)
+    assert entry.translation_key == "thermostat"
 
 
 async def test_current_humidity_reported(hass) -> None:

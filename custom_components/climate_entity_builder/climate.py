@@ -98,6 +98,12 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
 
     _attr_has_entity_name = True
     _attr_name = None
+    # Needed so the frontend can find our translated label for the custom
+    # "frost_protection" preset value below (entity.climate.thermostat.
+    # state_attributes.preset_mode.state.frost_protection). The standard
+    # presets (none/comfort/eco) keep resolving via HA's own shared climate
+    # translations regardless - this only adds the one we own.
+    _attr_translation_key = "thermostat"
     _attr_should_poll = False
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_supported_features = (
