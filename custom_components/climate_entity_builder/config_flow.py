@@ -62,9 +62,6 @@ from .const import (
     SUBENTRY_TYPE_THERMOSTAT,
 )
 
-# device_class filter for the window/door contacts that pause heating.
-WINDOW_SENSOR_DEVICE_CLASSES = ["window", "door", "garage_door", "opening"]
-
 # Switches and input_booleans are both turned on/off through the generic
 # `homeassistant.turn_on` / `turn_off` services, which keeps the door open for
 # future actuator domains (e.g. fans) without touching the control logic.
@@ -140,10 +137,13 @@ def _thermostat_data_schema(defaults: Mapping[str, Any]) -> vol.Schema:
                 CONF_WINDOW_SENSORS, default=d(CONF_WINDOW_SENSORS, None)
             ): vol.Any(
                 None,
+                # Filtered by domain only (not device_class window/door/
+                # opening/garage_door): some HA frontend versions don't
+                # render the entity picker correctly when device_class is a
+                # list combined with multiple selection.
                 EntitySelector(
                     EntitySelectorConfig(
                         domain="binary_sensor",
-                        device_class=WINDOW_SENSOR_DEVICE_CLASSES,
                         multiple=True,
                     )
                 ),
