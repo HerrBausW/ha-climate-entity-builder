@@ -1,4 +1,4 @@
-"""Config flow for the Room Thermostat integration."""
+"""Config flow for the Climate Entity Builder integration."""
 
 from __future__ import annotations
 
@@ -200,7 +200,7 @@ def _validate(
 
 
 class RoomThermostatConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Handle the (single-instance) Room Thermostat hub config flow."""
+    """Handle the (single-instance) Climate Entity Builder hub config flow."""
 
     VERSION = 1
 
@@ -212,7 +212,7 @@ class RoomThermostatConfigFlow(ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="single_instance_allowed")
 
         if user_input is not None:
-            return self.async_create_entry(title="Room Thermostat", data={})
+            return self.async_create_entry(title="Climate Entity Builder", data={})
 
         return self.async_show_form(step_id="user")
 

@@ -1,4 +1,4 @@
-"""Shared fixtures for Room Thermostat tests."""
+"""Shared fixtures for Climate Entity Builder tests."""
 
 import pytest
 

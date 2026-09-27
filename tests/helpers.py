@@ -1,4 +1,4 @@
-"""Shared helpers for Room Thermostat tests."""
+"""Shared helpers for Climate Entity Builder tests."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from typing import Any
 from homeassistant.setup import async_setup_component
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.room_thermostat.const import (
+from custom_components.climate_entity_builder.const import (
     CONF_COLD_TOLERANCE,
     CONF_COMFORT_TEMP,
     CONF_ECO_TEMP,
@@ -68,10 +68,10 @@ def thermostat_subentry(**overrides: Any) -> dict[str, Any]:
 
 
 def make_hub_entry(*, subentries: list[dict[str, Any]] | None = None) -> MockConfigEntry:
-    """Return a MockConfigEntry for the Room Thermostat hub."""
+    """Return a MockConfigEntry for the Climate Entity Builder hub."""
     return MockConfigEntry(
         domain=DOMAIN,
-        title="Room Thermostat",
+        title="Climate Entity Builder",
         data={},
         subentries_data=subentries or [],
     )

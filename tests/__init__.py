@@ -1,1 +1,1 @@
-"""Tests for the Room Thermostat integration."""
+"""Tests for the Climate Entity Builder integration."""

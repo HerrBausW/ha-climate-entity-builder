@@ -28,4 +28,4 @@ jobs:
         run: pip install -r requirements_test.txt
 
       - name: Run pytest
-        run: pytest tests --cov=custom_components.room_thermostat --cov-report=term-missing
+        run: pytest tests --cov=custom_components.climate_entity_builder --cov-report=term-missing

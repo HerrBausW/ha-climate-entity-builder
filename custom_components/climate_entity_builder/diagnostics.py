@@ -1,4 +1,4 @@
-"""Diagnostics support for Room Thermostat."""
+"""Diagnostics support for Climate Entity Builder."""
 
 from __future__ import annotations
 

@@ -2,12 +2,12 @@
   "config": {
     "step": {
       "user": {
-        "title": "Room Thermostat einrichten",
+        "title": "Climate Entity Builder einrichten",
         "description": "Hiermit wird der Room-Thermostat-Hub angelegt. Über \"Thermostat hinzufügen\" auf der Geräteseite der Integration richtest du anschließend pro Raum ein virtuelles Thermostat ein."
       }
     },
     "abort": {
-      "single_instance_allowed": "Room Thermostat ist bereits eingerichtet. Weitere Thermostate über \"Thermostat hinzufügen\" auf der Geräteseite der Integration anlegen."
+      "single_instance_allowed": "Climate Entity Builder ist bereits eingerichtet. Weitere Thermostate über \"Thermostat hinzufügen\" auf der Geräteseite der Integration anlegen."
     }
   },
   "config_subentries": {
@@ -87,6 +87,16 @@
     },
     "preset_mode_not_supported": {
       "message": "Preset {preset} wird im aktuellen HVAC-Modus nicht unterstützt."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "heating_activity": {
+        "name": "Heizaktivität"
+      },
+      "failsafe": {
+        "name": "Failsafe"
+      }
     }
   }
 }

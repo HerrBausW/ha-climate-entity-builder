@@ -1,4 +1,4 @@
-"""Climate platform for the Room Thermostat integration."""
+"""Climate platform for the Climate Entity Builder integration."""
 
 from __future__ import annotations
 
@@ -34,6 +34,7 @@ from homeassistant.core import (
 )
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.event import async_call_later, async_track_state_change_event
 from homeassistant.helpers.restore_state import RestoreEntity
@@ -58,9 +59,11 @@ from .const import (
     CONF_SENSOR_STALE_TIMEOUT,
     CONF_TARGET_TEMP_STEP,
     CONF_TEMP_SENSOR,
+    DATA_FAILSAFE_STATES,
     DOMAIN,
     MANUFACTURER,
     SUBENTRY_TYPE_THERMOSTAT,
+    failsafe_signal,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -99,11 +102,12 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
     def __init__(self, subentry: ConfigSubentry) -> None:
         data = subentry.data
         name = data[CONF_NAME]
+        self._subentry_id = subentry.subentry_id
 
         self._attr_unique_id = subentry.subentry_id
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, subentry.subentry_id)},
-            name=f"Thermostat {name}",
+            name=name,
             manufacturer=MANUFACTURER,
             model="Virtual Room Thermostat",
         )
@@ -291,6 +295,17 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
             return None
         return value
 
+    def _set_failsafe_active(self, active: bool) -> None:
+        """Publish the failsafe state for the companion binary sensor."""
+        failsafe_states = self.hass.data.setdefault(DOMAIN, {}).setdefault(
+            DATA_FAILSAFE_STATES, {}
+        )
+        previous = failsafe_states.get(self._subentry_id)
+        self._failsafe_active = active
+        failsafe_states[self._subentry_id] = active
+        if previous != active:
+            async_dispatcher_send(self.hass, failsafe_signal(self._subentry_id))
+
     def _handle_temperature_state(self, state) -> None:
         value = self._is_valid_temperature_state(state)
         if value is not None:
@@ -299,7 +314,7 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
                 _LOGGER.info("%s: temperature sensor is valid again", self.entity_id)
             self._sensor_valid = True
             self._cancel_failsafe_timer()
-            self._failsafe_active = False
+            self._set_failsafe_active(False)
         else:
             if self._sensor_valid:
                 _LOGGER.warning(
@@ -335,7 +350,7 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
         self._failsafe_unsub = None
         if self._sensor_valid:
             return
-        self._failsafe_active = True
+        self._set_failsafe_active(True)
         _LOGGER.warning(
             "%s: sensor still invalid after %s minutes, closing heater output",
             self.entity_id,

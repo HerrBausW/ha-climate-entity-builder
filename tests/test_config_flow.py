@@ -1,11 +1,11 @@
-"""Tests for the Room Thermostat config & subentry flows."""
+"""Tests for the Climate Entity Builder config & subentry flows."""
 
 from __future__ import annotations
 
 from homeassistant.config_entries import SOURCE_RECONFIGURE, SOURCE_USER
 from homeassistant.data_entry_flow import FlowResultType
 
-from custom_components.room_thermostat.const import (
+from custom_components.climate_entity_builder.const import (
     CONF_HEATER,
     CONF_MAX_TEMP,
     CONF_MIN_TEMP,
@@ -26,7 +26,7 @@ async def test_hub_config_flow_creates_single_entry(hass) -> None:
 
     result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["title"] == "Room Thermostat"
+    assert result["title"] == "Climate Entity Builder"
 
     # A second attempt aborts: only a single hub instance is supported.
     result = await hass.config_entries.flow.async_init(

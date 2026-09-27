@@ -1,4 +1,4 @@
-"""Tests for the Room Thermostat climate entity behaviour."""
+"""Tests for the Climate Entity Builder climate entity behaviour."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ from pytest_homeassistant_custom_component.common import (
     mock_restore_cache,
 )
 
-from custom_components.room_thermostat.const import ATTR_FAILSAFE_ACTIVE
+from custom_components.climate_entity_builder.const import ATTR_FAILSAFE_ACTIVE
 
 from .helpers import (
     HEATER,
@@ -29,7 +29,7 @@ from .helpers import (
     thermostat_subentry,
 )
 
-CLIMATE_ENTITY_ID = "climate.thermostat_schlafzimmer"
+CLIMATE_ENTITY_ID = "climate.schlafzimmer"
 
 
 async def _setup(hass, **overrides):

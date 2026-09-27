@@ -1,0 +1,12 @@
+{
+  "domain": "climate_entity_builder",
+  "name": "Climate Entity Builder",
+  "codeowners": ["@HerrBausW"],
+  "config_flow": true,
+  "documentation": "https://github.com/HerrBausW/ha-climate-entity-builder",
+  "integration_type": "hub",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/HerrBausW/ha-climate-entity-builder/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

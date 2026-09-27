@@ -1,10 +1,10 @@
-"""Constants for the Room Thermostat integration."""
+"""Constants for the Climate Entity Builder integration."""
 
 from __future__ import annotations
 
 from homeassistant.components.climate import PRESET_COMFORT, PRESET_ECO
 
-DOMAIN = "room_thermostat"
+DOMAIN = "climate_entity_builder"
 
 SUBENTRY_TYPE_THERMOSTAT = "thermostat"
 
@@ -48,9 +48,16 @@ DEFAULT_SENSOR_MAX_VALID_TEMP = 40.0
 PRESET_COMFORT_MODE = PRESET_COMFORT
 PRESET_ECO_MODE = PRESET_ECO
 
-# --- Misc ------------------------------------------------------------------
+# --- Runtime state / attributes -------------------------------------------------
 
 ATTR_EFFECTIVE_TARGET_TEMPERATURE = "effective_target_temperature"
 ATTR_FAILSAFE_ACTIVE = "failsafe_active"
+DATA_FAILSAFE_STATES = "failsafe_states"
 
-MANUFACTURER = "Room Thermostat"
+
+def failsafe_signal(subentry_id: str) -> str:
+    """Return the dispatcher signal for a thermostat failsafe state."""
+    return f"{DOMAIN}_failsafe_{subentry_id}"
+
+
+MANUFACTURER = "Climate Entity Builder"

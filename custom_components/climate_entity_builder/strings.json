@@ -2,12 +2,12 @@
   "config": {
     "step": {
       "user": {
-        "title": "Set up Room Thermostat",
-        "description": "This creates the Room Thermostat hub. Afterwards, use \"Add thermostat\" on the integration's device page to configure one virtual thermostat per room."
+        "title": "Set up Climate Entity Builder",
+        "description": "This creates the Climate Entity Builder hub. Afterwards, use \"Add thermostat\" on the integration's device page to configure one virtual thermostat per room."
       }
     },
     "abort": {
-      "single_instance_allowed": "Room Thermostat is already set up. Add more thermostats via \"Add thermostat\" on the integration's device page."
+      "single_instance_allowed": "Climate Entity Builder is already set up. Add more thermostats via \"Add thermostat\" on the integration's device page."
     }
   },
   "config_subentries": {
@@ -87,6 +87,16 @@
     },
     "preset_mode_not_supported": {
       "message": "Preset {preset} is not supported in the current HVAC mode."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "heating_activity": {
+        "name": "Heating activity"
+      },
+      "failsafe": {
+        "name": "Failsafe"
+      }
     }
   }
 }
