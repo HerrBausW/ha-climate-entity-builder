@@ -99,6 +99,9 @@
     },
     "preset_mode_not_supported": {
       "message": "Preset {preset} is not supported in the current HVAC mode."
+    },
+    "preset_mode_frost_protection_readonly": {
+      "message": "Frost protection is set automatically while a configured window/door sensor is open and can't be selected manually."
     }
   },
   "entity": {

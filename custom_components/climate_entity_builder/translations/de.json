@@ -99,6 +99,9 @@
     },
     "preset_mode_not_supported": {
       "message": "Preset {preset} wird im aktuellen HVAC-Modus nicht unterstützt."
+    },
+    "preset_mode_frost_protection_readonly": {
+      "message": "Frostschutz wird automatisch gesetzt, solange ein konfigurierter Fenster-/Türkontakt offen ist, und kann nicht manuell ausgewählt werden."
     }
   },
   "entity": {

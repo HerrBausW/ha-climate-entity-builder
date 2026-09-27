@@ -247,21 +247,34 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
         return HVACAction.HEATING if self._is_heater_on() else HVACAction.IDLE
 
     @property
+    def _frost_protection_active(self) -> bool:
+        return self._window_open and self._attr_hvac_mode != HVACMode.OFF
+
+    @property
     def preset_mode(self) -> str:
-        # Not user-selectable (absent from preset_modes below); only ever
-        # shown while a configured window/door sensor is holding the
-        # thermostat at the frost protection temperature. The user's real
-        # preset/target underneath is untouched and reasserts itself the
-        # moment the window closes.
-        if self._window_open and self._attr_hvac_mode != HVACMode.OFF:
+        # Only ever returned while a configured window/door sensor is
+        # holding the thermostat at the frost protection temperature. The
+        # user's real preset/target underneath is untouched and reasserts
+        # itself the moment the window closes.
+        if self._frost_protection_active:
             return PRESET_FROST_PROTECTION
         return self._attr_preset_mode
 
     @property
     def preset_modes(self) -> list[str]:
         if self._attr_hvac_mode == HVACMode.HEAT:
-            return [PRESET_NONE, PRESET_COMFORT, PRESET_ECO]
-        return [PRESET_NONE]
+            modes = [PRESET_NONE, PRESET_COMFORT, PRESET_ECO]
+        else:
+            modes = [PRESET_NONE]
+        if self._frost_protection_active:
+            # Included only while active, so the climate card's preset chip
+            # and picker can actually render/highlight it (a preset_mode
+            # value absent from preset_modes isn't recognized by the
+            # frontend and silently falls back to showing "none" selected).
+            # Still not meant to be picked manually - async_set_preset_mode
+            # rejects it below.
+            modes = [*modes, PRESET_FROST_PROTECTION]
+        return modes
 
     @property
     def current_temperature(self) -> float | None:
@@ -315,6 +328,11 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
         self.async_write_ha_state()
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
+        if preset_mode == PRESET_FROST_PROTECTION:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="preset_mode_frost_protection_readonly",
+            )
         if preset_mode not in self.preset_modes:
             raise ServiceValidationError(
                 translation_domain=DOMAIN,

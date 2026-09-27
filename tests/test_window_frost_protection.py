@@ -4,8 +4,11 @@ from __future__ import annotations
 
 from datetime import timedelta
 
+import pytest
+
 from homeassistant.components.climate import ATTR_PRESET_MODE, HVACMode
 from homeassistant.const import ATTR_TEMPERATURE
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import entity_registry as er
 import homeassistant.util.dt as dt_util
 from pytest_homeassistant_custom_component.common import async_fire_time_changed
@@ -74,6 +77,57 @@ async def test_window_open_switches_to_frost_protection(hass) -> None:
     assert state.attributes[ATTR_WINDOW_OPEN] is True
     # 19 °C is well above the 7 °C frost target, so heating stays off.
     assert hass.states.get(HEATER).state == "off"
+
+
+async def test_frost_protection_preset_is_listed_only_while_active(hass) -> None:
+    """The climate card can't render/highlight a preset absent from preset_modes.
+
+    frost_protection must appear in preset_modes while the pause is active
+    (so the card's chip actually shows it instead of silently defaulting to
+    "none"), and disappear again once the window closes.
+    """
+    await async_setup_base(hass, temperature=19.0)
+    hass.states.async_set(WINDOW_SENSOR, "off")
+    await _setup(hass, window_sensors=[WINDOW_SENSOR])
+    await _set_hvac_mode(hass, HVACMode.HEAT)
+    await _set_temperature(hass, 21.0)
+    await hass.async_block_till_done()
+
+    state = hass.states.get(CLIMATE_ENTITY_ID)
+    assert PRESET_FROST_PROTECTION not in state.attributes["preset_modes"]
+
+    hass.states.async_set(WINDOW_SENSOR, "on")
+    await hass.async_block_till_done()
+
+    state = hass.states.get(CLIMATE_ENTITY_ID)
+    assert PRESET_FROST_PROTECTION in state.attributes["preset_modes"]
+    assert state.attributes[ATTR_PRESET_MODE] == PRESET_FROST_PROTECTION
+
+    hass.states.async_set(WINDOW_SENSOR, "off")
+    await hass.async_block_till_done()
+
+    state = hass.states.get(CLIMATE_ENTITY_ID)
+    assert PRESET_FROST_PROTECTION not in state.attributes["preset_modes"]
+
+
+async def test_frost_protection_preset_cannot_be_set_manually(hass) -> None:
+    """It's shown for information only - selecting it via the service must fail."""
+    await async_setup_base(hass, temperature=19.0)
+    hass.states.async_set(WINDOW_SENSOR, "on")
+    await _setup(hass, window_sensors=[WINDOW_SENSOR])
+    await _set_hvac_mode(hass, HVACMode.HEAT)
+    await hass.async_block_till_done()
+
+    with pytest.raises(ServiceValidationError):
+        await hass.services.async_call(
+            "climate",
+            "set_preset_mode",
+            {
+                "entity_id": CLIMATE_ENTITY_ID,
+                ATTR_PRESET_MODE: PRESET_FROST_PROTECTION,
+            },
+            blocking=True,
+        )
 
 
 async def test_second_window_sensor_also_triggers_pause(hass) -> None:
