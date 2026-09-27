@@ -84,6 +84,9 @@
         "name_required": "Bitte einen Namen eingeben.",
         "name_exists": "Ein Thermostat mit diesem Namen existiert bereits.",
         "min_max_invalid": "Der Maximalwert muss größer als der Minimalwert sein."
+      },
+      "abort": {
+        "reconfigure_successful": "Das Thermostat wurde erfolgreich aktualisiert."
       }
     }
   },

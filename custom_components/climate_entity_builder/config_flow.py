@@ -92,6 +92,33 @@ def _thermostat_data_schema(defaults: Mapping[str, Any]) -> vol.Schema:
             vol.Optional(CONF_SCHEDULE, default=d(CONF_SCHEDULE, None)): vol.Any(
                 None, EntitySelector(EntitySelectorConfig(domain="schedule"))
             ),
+            # Window/door sensors, their delay and the frost protection
+            # target form one cohesive "window pause" group and are kept
+            # together, right after the other entity pickers above.
+            #
+            # A multi-entity EntitySelector's default must be a list, never
+            # None: some HA frontend versions submit "nothing selected" as
+            # null rather than [], and a previously-saved null default
+            # (present key, not missing) silently breaks *just this field's*
+            # rendering in Reconfigure. `.get(key, [])` alone doesn't guard
+            # against that, since the fallback only applies when the key is
+            # absent, not when it's present with value None.
+            vol.Optional(
+                CONF_WINDOW_SENSORS, default=d(CONF_WINDOW_SENSORS, []) or []
+            ): EntitySelector(
+                EntitySelectorConfig(domain="binary_sensor", multiple=True, reorder=True)
+            ),
+            vol.Optional(
+                CONF_WINDOW_OPEN_DELAY, default=d(CONF_WINDOW_OPEN_DELAY, None)
+            ): vol.Any(None, DurationSelector(DurationSelectorConfig(enable_day=False))),
+            vol.Required(
+                CONF_FROST_PROTECTION_TEMP,
+                default=d(CONF_FROST_PROTECTION_TEMP, DEFAULT_FROST_PROTECTION_TEMP),
+            ): NumberSelector(
+                NumberSelectorConfig(
+                    min=-20, max=50, step=0.5, mode=NumberSelectorMode.BOX, unit_of_measurement="°C"
+                )
+            ),
             vol.Required(
                 CONF_MIN_TEMP, default=d(CONF_MIN_TEMP, DEFAULT_MIN_TEMP)
             ): NumberSelector(
@@ -133,28 +160,6 @@ def _thermostat_data_schema(defaults: Mapping[str, Any]) -> vol.Schema:
             vol.Optional(
                 CONF_MIN_CYCLE_DURATION, default=d(CONF_MIN_CYCLE_DURATION, None)
             ): vol.Any(None, DurationSelector(DurationSelectorConfig(enable_day=False))),
-            # Plain vol.Optional with a [] default, NOT wrapped in
-            # vol.Any(None, ...): that None-union (needed for single-entity
-            # optional fields elsewhere in this schema) is what broke
-            # rendering together with multiple=True. This mirrors exactly
-            # how Home Assistant's own Group helper defines its multi-entity
-            # picker (homeassistant/components/group/config_flow.py).
-            vol.Optional(
-                CONF_WINDOW_SENSORS, default=d(CONF_WINDOW_SENSORS, [])
-            ): EntitySelector(
-                EntitySelectorConfig(domain="binary_sensor", multiple=True, reorder=True)
-            ),
-            vol.Optional(
-                CONF_WINDOW_OPEN_DELAY, default=d(CONF_WINDOW_OPEN_DELAY, None)
-            ): vol.Any(None, DurationSelector(DurationSelectorConfig(enable_day=False))),
-            vol.Required(
-                CONF_FROST_PROTECTION_TEMP,
-                default=d(CONF_FROST_PROTECTION_TEMP, DEFAULT_FROST_PROTECTION_TEMP),
-            ): NumberSelector(
-                NumberSelectorConfig(
-                    min=-20, max=50, step=0.5, mode=NumberSelectorMode.BOX, unit_of_measurement="°C"
-                )
-            ),
             vol.Required(
                 CONF_COMFORT_TEMP, default=d(CONF_COMFORT_TEMP, DEFAULT_COMFORT_TEMP)
             ): NumberSelector(
@@ -282,7 +287,14 @@ class ThermostatSubentryFlowHandler(ConfigSubentryFlow):
             )
             if not errors:
                 name = user_input[CONF_NAME].strip()
-                data = {**user_input, CONF_NAME: name}
+                data = {
+                    **user_input,
+                    CONF_NAME: name,
+                    # Never persist None for the multi-select: a saved null
+                    # here (rather than a missing key) breaks this field's
+                    # rendering on the next Reconfigure.
+                    CONF_WINDOW_SENSORS: user_input.get(CONF_WINDOW_SENSORS) or [],
+                }
                 if existing is not None:
                     return self.async_update_and_abort(entry, existing, data=data, title=name)
                 return self.async_create_entry(title=name, data=data)

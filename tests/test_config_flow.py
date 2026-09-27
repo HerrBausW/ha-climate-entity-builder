@@ -5,16 +5,24 @@ from __future__ import annotations
 from homeassistant.config_entries import SOURCE_RECONFIGURE, SOURCE_USER
 from homeassistant.data_entry_flow import FlowResultType
 
+from custom_components.climate_entity_builder.config_flow import _thermostat_data_schema
 from custom_components.climate_entity_builder.const import (
     CONF_HEATER,
     CONF_MAX_TEMP,
     CONF_MIN_TEMP,
     CONF_NAME,
+    CONF_WINDOW_SENSORS,
     DOMAIN,
     SUBENTRY_TYPE_THERMOSTAT,
 )
 
 from .helpers import make_hub_entry, thermostat_data, thermostat_subentry
+
+
+def _marker_default(schema, key: str):
+    """Return the resolved default for a vol.Schema key marker."""
+    marker = next(k for k in schema.schema if str(k) == key)
+    return marker.default()
 
 
 async def test_hub_config_flow_creates_single_entry(hass) -> None:
@@ -111,6 +119,54 @@ async def test_reconfigure_thermostat_changes_entities(hass) -> None:
 
     updated = entry.subentries[subentry.subentry_id]
     assert updated.data[CONF_HEATER] == "switch.kuche_heizventil"
+
+
+def test_window_sensors_default_is_never_none() -> None:
+    """A previously-saved None must not reach the multi-select as its default.
+
+    A stored `window_sensors: None` (present key, not missing) is what broke
+    this one field's rendering in Reconfigure for an existing thermostat,
+    even though a merely-absent key correctly falls back to []. Guard both.
+    """
+    assert _marker_default(_thermostat_data_schema({}), CONF_WINDOW_SENSORS) == []
+    assert (
+        _marker_default(
+            _thermostat_data_schema({CONF_WINDOW_SENSORS: None}), CONF_WINDOW_SENSORS
+        )
+        == []
+    )
+    assert (
+        _marker_default(
+            _thermostat_data_schema({CONF_WINDOW_SENSORS: ["binary_sensor.x"]}),
+            CONF_WINDOW_SENSORS,
+        )
+        == ["binary_sensor.x"]
+    )
+
+
+async def test_reconfigure_without_window_sensors_never_persists_none(hass) -> None:
+    """Submitting the form with no window sensor selected must store [], not None.
+
+    Otherwise the next Reconfigure of this same thermostat re-breaks the
+    multi-select field, since a stored None (not a missing key) is what
+    causes it to fail to render.
+    """
+    entry = make_hub_entry(subentries=[thermostat_subentry()])
+    entry.add_to_hass(hass)
+    subentry = next(iter(entry.subentries.values()))
+
+    result = await hass.config_entries.subentries.async_init(
+        (entry.entry_id, SUBENTRY_TYPE_THERMOSTAT),
+        context={"source": SOURCE_RECONFIGURE, "subentry_id": subentry.subentry_id},
+    )
+    new_data = thermostat_data(**{CONF_WINDOW_SENSORS: None})
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], new_data
+    )
+    assert result["type"] is FlowResultType.ABORT
+
+    updated = entry.subentries[subentry.subentry_id]
+    assert updated.data[CONF_WINDOW_SENSORS] == []
 
 
 async def test_remove_thermostat_subentry(hass) -> None:
