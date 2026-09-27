@@ -45,7 +45,8 @@ from .const import (
     CONF_TARGET_TEMP_STEP,
     CONF_TEMP_SENSOR,
     CONF_WINDOW_OPEN_DELAY,
-    CONF_WINDOW_SENSORS,
+    CONF_WINDOW_SENSOR,
+    CONF_WINDOW_SENSOR_2,
     CONF_FROST_PROTECTION_TEMP,
     DEFAULT_COLD_TOLERANCE,
     DEFAULT_COMFORT_TEMP,
@@ -133,20 +134,21 @@ def _thermostat_data_schema(defaults: Mapping[str, Any]) -> vol.Schema:
             vol.Optional(
                 CONF_MIN_CYCLE_DURATION, default=d(CONF_MIN_CYCLE_DURATION, None)
             ): vol.Any(None, DurationSelector(DurationSelectorConfig(enable_day=False))),
+            # Two single-entity fields rather than one multi-select: at
+            # least one HA frontend version fails to render an EntitySelector
+            # at all once `multiple: true` is set, even though the backend
+            # schema is valid. Two plain fields use the same selector shape
+            # as heater/humidity_sensor/schedule_entity above, which is
+            # known to render correctly, at the cost of a 2-window cap.
             vol.Optional(
-                CONF_WINDOW_SENSORS, default=d(CONF_WINDOW_SENSORS, None)
+                CONF_WINDOW_SENSOR, default=d(CONF_WINDOW_SENSOR, None)
             ): vol.Any(
-                None,
-                # Filtered by domain only (not device_class window/door/
-                # opening/garage_door): some HA frontend versions don't
-                # render the entity picker correctly when device_class is a
-                # list combined with multiple selection.
-                EntitySelector(
-                    EntitySelectorConfig(
-                        domain="binary_sensor",
-                        multiple=True,
-                    )
-                ),
+                None, EntitySelector(EntitySelectorConfig(domain="binary_sensor"))
+            ),
+            vol.Optional(
+                CONF_WINDOW_SENSOR_2, default=d(CONF_WINDOW_SENSOR_2, None)
+            ): vol.Any(
+                None, EntitySelector(EntitySelectorConfig(domain="binary_sensor"))
             ),
             vol.Optional(
                 CONF_WINDOW_OPEN_DELAY, default=d(CONF_WINDOW_OPEN_DELAY, None)

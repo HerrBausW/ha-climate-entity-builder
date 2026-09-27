@@ -97,9 +97,9 @@ introduced in HA 2025.7).
    - Temperature sensor (`device_class: temperature`)
    - Heater output (a `switch.*` or `input_boolean.*`)
    - Optional: humidity sensor, schedule, min/max temperature, step size,
-     cold/hot tolerance, minimum cycle duration, window/door sensors with
-     an open delay and frost protection temperature, comfort/eco
-     temperature, failsafe delay and plausibility bounds.
+     cold/hot tolerance, minimum cycle duration, one or two window/door
+     sensors with an open delay and frost protection temperature,
+     comfort/eco temperature, failsafe delay and plausibility bounds.
 3. Repeat step 2 for every room. Each one becomes its own device with a
    `climate.*` entity.
 4. To change a thermostat's configuration later, or to remove it, use the
@@ -151,8 +151,8 @@ resumes immediately and the failsafe attribute clears.
 
 ## Window contacts & frost protection
 
-Optionally select one or more `binary_sensor.*` window/door contacts and a
-frost protection temperature (default 7 °C). While any of them is open (after
+Optionally select one or two `binary_sensor.*` window/door contacts and a
+frost protection temperature (default 7 °C). While either one is open (after
 an optional delay, to ignore a quick opening for airing out the room), the
 thermostat regulates against the frost protection temperature instead of the
 normal setpoint — it doesn't just switch fully off, so a real cold snap with
@@ -186,6 +186,9 @@ wall-mounted thermostat's status entities would:
   design, to avoid two conflicting ways to pick the setpoint.
 - The heater output must already exist as a `switch.*` or `input_boolean.*`
   entity; multiple actuators per room are not yet supported.
+- At most two window/door sensors per thermostat (a single-select field
+  each, rather than a multi-select list, to sidestep a rendering issue in
+  some HA frontend versions).
 
 ## Example configuration
 

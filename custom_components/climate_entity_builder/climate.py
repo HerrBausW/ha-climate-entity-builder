@@ -49,7 +49,6 @@ from .const import (
     CONF_ECO_TEMP,
     CONF_FROST_PROTECTION_TEMP,
     CONF_HEATER,
-    DEFAULT_FROST_PROTECTION_TEMP,
     CONF_HOT_TOLERANCE,
     CONF_HUMIDITY_SENSOR,
     CONF_MAX_TEMP,
@@ -63,9 +62,11 @@ from .const import (
     CONF_TARGET_TEMP_STEP,
     CONF_TEMP_SENSOR,
     CONF_WINDOW_OPEN_DELAY,
-    CONF_WINDOW_SENSORS,
+    CONF_WINDOW_SENSOR,
+    CONF_WINDOW_SENSOR_2,
     DATA_FAILSAFE_STATES,
     DATA_WINDOW_OPEN_STATES,
+    DEFAULT_FROST_PROTECTION_TEMP,
     DOMAIN,
     MANUFACTURER,
     PRESET_FROST_PROTECTION,
@@ -141,10 +142,11 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
             timedelta(**raw_cycle) if raw_cycle else None
         )
 
-        raw_window_sensors = data.get(CONF_WINDOW_SENSORS)
-        self._window_sensor_entity_ids: list[str] = (
-            list(raw_window_sensors) if raw_window_sensors else []
-        )
+        self._window_sensor_entity_ids: list[str] = [
+            entity_id
+            for entity_id in (data.get(CONF_WINDOW_SENSOR), data.get(CONF_WINDOW_SENSOR_2))
+            if entity_id
+        ]
         raw_window_delay = data.get(CONF_WINDOW_OPEN_DELAY)
         self._window_open_delay: timedelta | None = (
             timedelta(**raw_window_delay) if raw_window_delay else None
