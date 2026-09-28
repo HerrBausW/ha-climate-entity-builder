@@ -35,7 +35,6 @@
             "min_cycle_duration": "Minimale Schaltzeit (optional)",
             "window_sensors": "Fenster-/Türkontakte pausieren die Heizung (optional)",
             "window_open_delay": "Verzögerung bis zur Pause nach Fensteröffnung (optional)",
-            "frost_protection_temperature": "Frostschutztemperatur (während der Pause)",
             "comfort_temperature": "Komforttemperatur (Zeitplan aktiv)",
             "eco_temperature": "Absenktemperatur (Zeitplan inaktiv)",
             "sensor_stale_timeout": "Failsafe-Verzögerung bei ungültigem Sensorwert",
@@ -46,9 +45,8 @@
             "heater": "Wird über die generischen Dienste homeassistant.turn_on/turn_off geschaltet.",
             "schedule_entity": "Eine schedule.*-Entity. Ist sie aktiv, gilt die Komforttemperatur, sonst die Absenktemperatur.",
             "min_cycle_duration": "Verhindert zu häufiges Takten des Heizungsausgangs.",
-            "window_sensors": "Ist einer davon offen, pausiert die Heizung und die Frostschutztemperatur gilt statt des normalen Sollwerts.",
+            "window_sensors": "Ist einer davon offen, pausiert die Heizung und die Absenktemperatur gilt statt des normalen Sollwerts.",
             "window_open_delay": "Ignoriert kurzes Öffnen; die Heizung pausiert erst, wenn ein Fenster so lange offen war.",
-            "frost_protection_temperature": "Effektiver Sollwert, solange ein konfigurierter Fenster-/Türkontakt offen ist. Nur relevant, wenn ein Fensterkontakt gesetzt ist.",
             "sensor_stale_timeout": "Wie lange ein unavailable/unknown/unplausibler Wert toleriert wird, bevor der Ausgang zwangsweise geschlossen wird.",
             "sensor_min_valid_temp": "Werte unterhalb dieser Grenze gelten als unplausibel.",
             "sensor_max_valid_temp": "Werte oberhalb dieser Grenze gelten als unplausibel."
@@ -71,7 +69,6 @@
             "min_cycle_duration": "Minimale Schaltzeit (optional)",
             "window_sensors": "Fenster-/Türkontakte pausieren die Heizung (optional)",
             "window_open_delay": "Verzögerung bis zur Pause nach Fensteröffnung (optional)",
-            "frost_protection_temperature": "Frostschutztemperatur (während der Pause)",
             "comfort_temperature": "Komforttemperatur (Zeitplan aktiv)",
             "eco_temperature": "Absenktemperatur (Zeitplan inaktiv)",
             "sensor_stale_timeout": "Failsafe-Verzögerung bei ungültigem Sensorwert",
@@ -100,8 +97,8 @@
     "preset_mode_not_supported": {
       "message": "Preset {preset} wird im aktuellen HVAC-Modus nicht unterstützt."
     },
-    "preset_mode_frost_protection_readonly": {
-      "message": "Frostschutz wird automatisch gesetzt, solange ein konfigurierter Fenster-/Türkontakt offen ist, und kann nicht manuell ausgewählt werden."
+    "preset_mode_window_open_readonly": {
+      "message": "Fenster offen wird automatisch gesetzt, solange ein konfigurierter Fenster-/Türkontakt offen ist, und kann nicht manuell ausgewählt werden."
     }
   },
   "entity": {
@@ -110,7 +107,7 @@
         "state_attributes": {
           "preset_mode": {
             "state": {
-              "frost_protection": "Frostschutz"
+              "window_open": "Fenster offen"
             }
           }
         }

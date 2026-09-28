@@ -46,11 +46,9 @@ from .const import (
     CONF_TEMP_SENSOR,
     CONF_WINDOW_OPEN_DELAY,
     CONF_WINDOW_SENSORS,
-    CONF_FROST_PROTECTION_TEMP,
     DEFAULT_COLD_TOLERANCE,
     DEFAULT_COMFORT_TEMP,
     DEFAULT_ECO_TEMP,
-    DEFAULT_FROST_PROTECTION_TEMP,
     DEFAULT_HOT_TOLERANCE,
     DEFAULT_MAX_TEMP,
     DEFAULT_MIN_TEMP,
@@ -92,9 +90,9 @@ def _thermostat_data_schema(defaults: Mapping[str, Any]) -> vol.Schema:
             vol.Optional(CONF_SCHEDULE, default=d(CONF_SCHEDULE, None)): vol.Any(
                 None, EntitySelector(EntitySelectorConfig(domain="schedule"))
             ),
-            # Window/door sensors, their delay and the frost protection
-            # target form one cohesive "window pause" group and are kept
-            # together, right after the other entity pickers above.
+            # Window/door sensors and their delay form one cohesive "window
+            # pause" group and are kept together, right after the other
+            # entity pickers above.
             #
             # A multi-entity EntitySelector's default must be a list, never
             # None: some HA frontend versions submit "nothing selected" as
@@ -111,14 +109,6 @@ def _thermostat_data_schema(defaults: Mapping[str, Any]) -> vol.Schema:
             vol.Optional(
                 CONF_WINDOW_OPEN_DELAY, default=d(CONF_WINDOW_OPEN_DELAY, None)
             ): vol.Any(None, DurationSelector(DurationSelectorConfig(enable_day=False))),
-            vol.Required(
-                CONF_FROST_PROTECTION_TEMP,
-                default=d(CONF_FROST_PROTECTION_TEMP, DEFAULT_FROST_PROTECTION_TEMP),
-            ): NumberSelector(
-                NumberSelectorConfig(
-                    min=-20, max=50, step=0.5, mode=NumberSelectorMode.BOX, unit_of_measurement="°C"
-                )
-            ),
             vol.Required(
                 CONF_MIN_TEMP, default=d(CONF_MIN_TEMP, DEFAULT_MIN_TEMP)
             ): NumberSelector(

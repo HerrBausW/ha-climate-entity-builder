@@ -35,7 +35,6 @@
             "min_cycle_duration": "Minimum switch cycle duration (optional)",
             "window_sensors": "Window/door sensors pausing heating (optional)",
             "window_open_delay": "Delay before pausing after a window opens (optional)",
-            "frost_protection_temperature": "Frost protection temperature (while paused)",
             "comfort_temperature": "Comfort temperature (schedule on)",
             "eco_temperature": "Eco/setback temperature (schedule off)",
             "sensor_stale_timeout": "Failsafe delay after invalid sensor reading",
@@ -46,9 +45,8 @@
             "heater": "Turned on/off via the generic homeassistant.turn_on/turn_off services.",
             "schedule_entity": "A schedule.* entity. When active, the comfort temperature is used; otherwise the eco temperature.",
             "min_cycle_duration": "Prevents short-cycling the heater output.",
-            "window_sensors": "While any of these is open, heating pauses and the frost protection temperature is used instead of the normal setpoint.",
+            "window_sensors": "While any of these is open, heating pauses and the eco/setback temperature is used instead of the normal setpoint.",
             "window_open_delay": "Ignores a brief opening; heating only pauses once a window has stayed open this long.",
-            "frost_protection_temperature": "Effective setpoint while a configured window/door sensor is open. Only used if a window sensor is set.",
             "sensor_stale_timeout": "How long an unavailable/unknown/implausible reading is tolerated before the heater is forced off.",
             "sensor_min_valid_temp": "Readings below this value are treated as implausible.",
             "sensor_max_valid_temp": "Readings above this value are treated as implausible."
@@ -71,7 +69,6 @@
             "min_cycle_duration": "Minimum switch cycle duration (optional)",
             "window_sensors": "Window/door sensors pausing heating (optional)",
             "window_open_delay": "Delay before pausing after a window opens (optional)",
-            "frost_protection_temperature": "Frost protection temperature (while paused)",
             "comfort_temperature": "Comfort temperature (schedule on)",
             "eco_temperature": "Eco/setback temperature (schedule off)",
             "sensor_stale_timeout": "Failsafe delay after invalid sensor reading",
@@ -100,8 +97,8 @@
     "preset_mode_not_supported": {
       "message": "Preset {preset} is not supported in the current HVAC mode."
     },
-    "preset_mode_frost_protection_readonly": {
-      "message": "Frost protection is set automatically while a configured window/door sensor is open and can't be selected manually."
+    "preset_mode_window_open_readonly": {
+      "message": "Window open is set automatically while a configured window/door sensor is open and can't be selected manually."
     }
   },
   "entity": {
@@ -110,7 +107,7 @@
         "state_attributes": {
           "preset_mode": {
             "state": {
-              "frost_protection": "Frost protection"
+              "window_open": "Window open"
             }
           }
         }

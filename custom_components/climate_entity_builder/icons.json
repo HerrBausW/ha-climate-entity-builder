@@ -5,7 +5,7 @@
         "state_attributes": {
           "preset_mode": {
             "state": {
-              "frost_protection": "mdi:snowflake"
+              "window_open": "mdi:window-open"
             }
           }
         }

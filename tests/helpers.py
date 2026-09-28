@@ -11,7 +11,6 @@ from custom_components.climate_entity_builder.const import (
     CONF_COLD_TOLERANCE,
     CONF_COMFORT_TEMP,
     CONF_ECO_TEMP,
-    CONF_FROST_PROTECTION_TEMP,
     CONF_HEATER,
     CONF_HOT_TOLERANCE,
     CONF_HUMIDITY_SENSOR,
@@ -54,7 +53,6 @@ def thermostat_data(**overrides: Any) -> dict[str, Any]:
         CONF_SENSOR_STALE_TIMEOUT: 15,
         CONF_SENSOR_MIN_VALID: 5.0,
         CONF_SENSOR_MAX_VALID: 40.0,
-        CONF_FROST_PROTECTION_TEMP: 7.0,
     }
     data.update(overrides)
     return data

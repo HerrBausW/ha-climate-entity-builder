@@ -28,7 +28,6 @@ CONF_SENSOR_MIN_VALID = "sensor_min_valid_temp"
 CONF_SENSOR_MAX_VALID = "sensor_max_valid_temp"
 CONF_WINDOW_SENSORS = "window_sensors"
 CONF_WINDOW_OPEN_DELAY = "window_open_delay"
-CONF_FROST_PROTECTION_TEMP = "frost_protection_temperature"
 
 # --- Defaults ----------------------------------------------------------------
 
@@ -42,7 +41,6 @@ DEFAULT_ECO_TEMP = 18.0
 DEFAULT_SENSOR_STALE_TIMEOUT_MINUTES = 15
 DEFAULT_SENSOR_MIN_VALID_TEMP = 5.0
 DEFAULT_SENSOR_MAX_VALID_TEMP = 40.0
-DEFAULT_FROST_PROTECTION_TEMP = 7.0
 
 # --- Presets -------------------------------------------------------------------
 # Presets are only ever offered while hvac_mode == HEAT. In AUTO mode the
@@ -55,8 +53,8 @@ PRESET_ECO_MODE = PRESET_ECO
 # A window sensor pause is shown via this preset (not user-selectable, only
 # ever returned while a configured window/door sensor is open) instead of
 # forcing hvac_action to "off", so the thermostat keeps regulating against
-# the frost protection temperature rather than going fully inert.
-PRESET_FROST_PROTECTION = "frost_protection"
+# the eco/setback temperature rather than going fully inert.
+PRESET_WINDOW_OPEN = "window_open"
 
 # --- Runtime state / attributes -------------------------------------------------
 

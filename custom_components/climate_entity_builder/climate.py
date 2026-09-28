@@ -47,7 +47,6 @@ from .const import (
     CONF_COLD_TOLERANCE,
     CONF_COMFORT_TEMP,
     CONF_ECO_TEMP,
-    CONF_FROST_PROTECTION_TEMP,
     CONF_HEATER,
     CONF_HOT_TOLERANCE,
     CONF_HUMIDITY_SENSOR,
@@ -65,10 +64,9 @@ from .const import (
     CONF_WINDOW_SENSORS,
     DATA_FAILSAFE_STATES,
     DATA_WINDOW_OPEN_STATES,
-    DEFAULT_FROST_PROTECTION_TEMP,
     DOMAIN,
     MANUFACTURER,
-    PRESET_FROST_PROTECTION,
+    PRESET_WINDOW_OPEN,
     SUBENTRY_TYPE_THERMOSTAT,
     failsafe_signal,
     window_open_signal,
@@ -99,8 +97,8 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
     _attr_has_entity_name = True
     _attr_name = None
     # Needed so the frontend can find our translated label for the custom
-    # "frost_protection" preset value below (entity.climate.thermostat.
-    # state_attributes.preset_mode.state.frost_protection). The standard
+    # "window_open" preset value below (entity.climate.thermostat.
+    # state_attributes.preset_mode.state.window_open). The standard
     # presets (none/comfort/eco) keep resolving via HA's own shared climate
     # translations regardless - this only adds the one we own.
     _attr_translation_key = "thermostat"
@@ -152,13 +150,6 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
         self._window_open_delay: timedelta | None = (
             timedelta(**raw_window_delay) if raw_window_delay else None
         )
-        # .get() with a fallback, not data[...]: subentries created before
-        # this field existed (pre-0.2.0) don't have it in their stored data,
-        # and a KeyError here used to take down the whole climate platform.
-        self._frost_protection_temp: float = data.get(
-            CONF_FROST_PROTECTION_TEMP, DEFAULT_FROST_PROTECTION_TEMP
-        )
-
         self._attr_hvac_mode: HVACMode = HVACMode.OFF
         self._attr_target_temperature: float = self._comfort_temp
         self._attr_preset_mode: str = PRESET_NONE
@@ -253,17 +244,17 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
         return HVACAction.HEATING if self._is_heater_on() else HVACAction.IDLE
 
     @property
-    def _frost_protection_active(self) -> bool:
+    def _window_pause_active(self) -> bool:
         return self._window_open and self._attr_hvac_mode != HVACMode.OFF
 
     @property
     def preset_mode(self) -> str:
         # Only ever returned while a configured window/door sensor is
-        # holding the thermostat at the frost protection temperature. The
+        # holding the thermostat at the eco/setback temperature. The
         # user's real preset/target underneath is untouched and reasserts
         # itself the moment the window closes.
-        if self._frost_protection_active:
-            return PRESET_FROST_PROTECTION
+        if self._window_pause_active:
+            return PRESET_WINDOW_OPEN
         return self._attr_preset_mode
 
     @property
@@ -272,14 +263,14 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
             modes = [PRESET_NONE, PRESET_COMFORT, PRESET_ECO]
         else:
             modes = [PRESET_NONE]
-        if self._frost_protection_active:
+        if self._window_pause_active:
             # Included only while active, so the climate card's preset chip
             # and picker can actually render/highlight it (a preset_mode
             # value absent from preset_modes isn't recognized by the
             # frontend and silently falls back to showing "none" selected).
             # Still not meant to be picked manually - async_set_preset_mode
             # rejects it below.
-            modes = [*modes, PRESET_FROST_PROTECTION]
+            modes = [*modes, PRESET_WINDOW_OPEN]
         return modes
 
     @property
@@ -334,10 +325,10 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
         self.async_write_ha_state()
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
-        if preset_mode == PRESET_FROST_PROTECTION:
+        if preset_mode == PRESET_WINDOW_OPEN:
             raise ServiceValidationError(
                 translation_domain=DOMAIN,
-                translation_key="preset_mode_frost_protection_readonly",
+                translation_key="preset_mode_window_open_readonly",
             )
         if preset_mode not in self.preset_modes:
             raise ServiceValidationError(
@@ -507,7 +498,7 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
         if self._attr_hvac_mode == HVACMode.OFF:
             return None
         if self._window_open:
-            return self._frost_protection_temp
+            return self._eco_temp
         if self._attr_hvac_mode == HVACMode.AUTO:
             return self._comfort_temp if self._schedule_active() else self._eco_temp
         if self._attr_hvac_mode == HVACMode.HEAT:

@@ -21,7 +21,7 @@
 - [Modes](#modes)
 - [Hysteresis](#hysteresis)
 - [Failsafe](#failsafe)
-- [Window contacts & frost protection](#window-contacts--frost-protection)
+- [Window contacts](#window-contacts)
 - [Companion sensors](#companion-sensors)
 - [Known limitations](#known-limitations)
 - [Example configuration](#example-configuration)
@@ -50,7 +50,7 @@ companion sensors, so it fits right into an existing maintenance dashboard.
   where the schedule is the single source of truth for the setpoint).
 - Sensor failsafe with a configurable grace period and plausibility bounds —
   a brief glitch never cuts the heat, a genuinely dead sensor does.
-- Optional window/door contacts pause heating down to a frost protection
+- Optional window/door contacts pause heating down to the eco/setback
   temperature — regulated, not just switched fully off.
 - Companion `binary_sensor` entities per thermostat for maintenance
   dashboards: **heating activity**, **failsafe**, and (if configured)
@@ -98,8 +98,8 @@ introduced in HA 2025.7).
    - Heater output (a `switch.*` or `input_boolean.*`)
    - Optional: humidity sensor, schedule, min/max temperature, step size,
      cold/hot tolerance, minimum cycle duration, window/door sensors with
-     an open delay and frost protection temperature, comfort/eco
-     temperature, failsafe delay and plausibility bounds.
+     an open delay, comfort/eco temperature, failsafe delay and
+     plausibility bounds.
 3. Repeat step 2 for every room. Each one becomes its own device with a
    `climate.*` entity.
 4. To change a thermostat's configuration later, or to remove it, use the
@@ -149,21 +149,20 @@ forcing the heater output off. A brief glitch that clears within the delay
 never touches the output. Once a valid reading arrives, normal control
 resumes immediately and the failsafe attribute clears.
 
-## Window contacts & frost protection
+## Window contacts
 
-Optionally select one or more `binary_sensor.*` window/door contacts and a
-frost protection temperature (default 7 °C). While any of them is open (after
-an optional delay, to ignore a quick opening for airing out the room), the
-thermostat regulates against the frost protection temperature instead of the
-normal setpoint — it doesn't just switch fully off, so a real cold snap with
-the window open still gets a minimal amount of heat. This only applies while
-the thermostat is in `heat`/`auto`; if it's `off`, it stays `off` regardless
-of any window.
+Optionally select one or more `binary_sensor.*` window/door contacts. While
+any of them is open (after an optional delay, to ignore a quick opening for
+airing out the room), the thermostat regulates against the eco/setback
+temperature instead of the normal setpoint — it doesn't just switch fully
+off, so the room still gets a minimal amount of heat. This only applies
+while the thermostat is in `heat`/`auto`; if it's `off`, it stays `off`
+regardless of any window.
 
 While paused, the **Voreinstellung**/preset chip on the climate card shows
-**Frost protection** in place of the normal comfort/eco/none value. Your
-actual setpoint and preset underneath are untouched and reassert themselves
-the moment the window closes — nothing to reset manually.
+**Window open** in place of the normal comfort/eco/none value. Your actual
+setpoint and preset underneath are untouched and reassert themselves the
+moment the window closes — nothing to reset manually.
 
 ## Companion sensors
 

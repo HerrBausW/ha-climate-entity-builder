@@ -19,10 +19,7 @@ from pytest_homeassistant_custom_component.common import (
     mock_restore_cache,
 )
 
-from custom_components.climate_entity_builder.const import (
-    ATTR_FAILSAFE_ACTIVE,
-    CONF_FROST_PROTECTION_TEMP,
-)
+from custom_components.climate_entity_builder.const import ATTR_FAILSAFE_ACTIVE
 
 from .helpers import (
     HEATER,
@@ -125,12 +122,12 @@ async def test_auto_mode_uses_eco_when_schedule_off(hass) -> None:
 
 
 async def test_translation_key_set_for_custom_preset_state_translation(hass) -> None:
-    """A translation_key is required for the frost_protection preset label.
+    """A translation_key is required for the window_open preset label.
 
     Without it, HA has no shared translation for our custom preset value and
-    the frontend displays the raw "frost_protection" string everywhere,
-    while the standard none/comfort/eco presets keep resolving via HA's own
-    shared climate translations regardless of this key.
+    the frontend displays the raw "window_open" string everywhere, while the
+    standard none/comfort/eco presets keep resolving via HA's own shared
+    climate translations regardless of this key.
     """
     await async_setup_base(hass)
     await _setup(hass)
@@ -207,24 +204,6 @@ async def test_sensor_recovery_resumes_normal_control(hass) -> None:
     state = hass.states.get(CLIMATE_ENTITY_ID)
     assert state.attributes[ATTR_FAILSAFE_ACTIVE] is False
     assert hass.states.get(HEATER).state == "on"
-
-
-async def test_setup_survives_missing_frost_protection_key(hass) -> None:
-    """Regression: a subentry saved before frost protection existed (no
-    CONF_FROST_PROTECTION_TEMP in its data) must not crash the whole
-    platform on setup -- a KeyError here once took every thermostat in the
-    hub unavailable, not just the one missing the field."""
-    await async_setup_base(hass, temperature=19.0)
-    subentry = thermostat_subentry()
-    del subentry["data"][CONF_FROST_PROTECTION_TEMP]
-    entry = make_hub_entry(subentries=[subentry])
-    entry.add_to_hass(hass)
-    assert await hass.config_entries.async_setup(entry.entry_id)
-    await hass.async_block_till_done()
-
-    state = hass.states.get(CLIMATE_ENTITY_ID)
-    assert state is not None
-    assert state.state != "unavailable"
 
 
 async def test_restart_restores_hvac_mode_and_temperature(hass) -> None:
