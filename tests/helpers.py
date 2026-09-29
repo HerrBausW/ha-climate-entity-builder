@@ -17,6 +17,7 @@ from custom_components.climate_entity_builder.const import (
     CONF_MAX_TEMP,
     CONF_MIN_TEMP,
     CONF_NAME,
+    CONF_PROFILE_ICON,
     CONF_PROFILE_TEMPERATURE,
     CONF_SCHEDULE,
     CONF_SENSOR_MAX_VALID,
@@ -71,10 +72,16 @@ def thermostat_subentry(**overrides: Any) -> dict[str, Any]:
     }
 
 
-def profile_subentry(name: str, temperature: float) -> dict[str, Any]:
+def profile_subentry(
+    name: str, temperature: float, *, icon: str | None = None
+) -> dict[str, Any]:
     """Return a profile subentries_data entry for MockConfigEntry."""
     return {
-        "data": {CONF_NAME: name, CONF_PROFILE_TEMPERATURE: temperature},
+        "data": {
+            CONF_NAME: name,
+            CONF_PROFILE_TEMPERATURE: temperature,
+            CONF_PROFILE_ICON: icon,
+        },
         "subentry_type": SUBENTRY_TYPE_PROFILE,
         "title": name,
         "unique_id": None,

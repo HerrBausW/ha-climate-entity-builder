@@ -22,9 +22,13 @@ from homeassistant.helpers.selector import (
     DurationSelectorConfig,
     EntitySelector,
     EntitySelectorConfig,
+    IconSelector,
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
+    SelectOptionDict,
+    SelectSelector,
+    SelectSelectorConfig,
 )
 
 from .const import (
@@ -38,6 +42,7 @@ from .const import (
     CONF_MIN_CYCLE_DURATION,
     CONF_MIN_TEMP,
     CONF_NAME,
+    CONF_PROFILE_ICON,
     CONF_PROFILE_TEMPERATURE,
     CONF_SCHEDULE,
     CONF_SENSOR_MAX_VALID,
@@ -46,6 +51,7 @@ from .const import (
     CONF_TARGET_TEMP_STEP,
     CONF_TEMP_SENSOR,
     CONF_WINDOW_OPEN_DELAY,
+    CONF_WINDOW_OPEN_PROFILE,
     CONF_WINDOW_SENSORS,
     DEFAULT_COLD_TOLERANCE,
     DEFAULT_COMFORT_TEMP,
@@ -70,8 +76,14 @@ from .const import (
 HEATER_DOMAINS = ["switch", "input_boolean"]
 
 
-def _thermostat_data_schema(defaults: Mapping[str, Any]) -> vol.Schema:
-    """Build the (sub)entry schema, pre-filled with existing values if any."""
+def _thermostat_data_schema(
+    defaults: Mapping[str, Any], profile_options: list[SelectOptionDict]
+) -> vol.Schema:
+    """Build the (sub)entry schema, pre-filled with existing values if any.
+
+    profile_options lists this thermostat's own hub's current profiles (id ->
+    name), used for the "which profile applies while a window is open" field.
+    """
 
     def d(key: str, fallback: Any) -> Any:
         return defaults.get(key, fallback)
@@ -113,6 +125,13 @@ def _thermostat_data_schema(defaults: Mapping[str, Any]) -> vol.Schema:
             vol.Optional(
                 CONF_WINDOW_OPEN_DELAY, default=d(CONF_WINDOW_OPEN_DELAY, None)
             ): vol.Any(None, DurationSelector(DurationSelectorConfig(enable_day=False))),
+            # References a profile by its stable subentry ID, not by name, so
+            # renaming or reordering profiles later never breaks this link.
+            # Left unset, the eco/setback temperature is used while paused
+            # (unchanged from before profiles existed).
+            vol.Optional(
+                CONF_WINDOW_OPEN_PROFILE, default=d(CONF_WINDOW_OPEN_PROFILE, None)
+            ): vol.Any(None, SelectSelector(SelectSelectorConfig(options=profile_options))),
             vol.Required(
                 CONF_MIN_TEMP, default=d(CONF_MIN_TEMP, DEFAULT_MIN_TEMP)
             ): NumberSelector(
@@ -285,6 +304,13 @@ def _profile_data_schema(defaults: Mapping[str, Any]) -> vol.Schema:
                     min=-20, max=50, step=0.5, mode=NumberSelectorMode.BOX, unit_of_measurement="°C"
                 )
             ),
+            # Shown on the climate entity itself (sidebar, history graph,
+            # more-info header) while this profile is the active preset - a
+            # per-value icon in the preset picker's own dropdown row isn't
+            # possible for a dynamically-named preset like this one.
+            vol.Optional(
+                CONF_PROFILE_ICON, default=d(CONF_PROFILE_ICON, None)
+            ): vol.Any(None, IconSelector()),
         }
     )
 
@@ -370,7 +396,12 @@ class ThermostatSubentryFlowHandler(ConfigSubentryFlow):
                 return self.async_create_entry(title=name, data=data)
 
         defaults = dict(existing.data) if existing else dict(user_input or {})
-        schema = _thermostat_data_schema(defaults)
+        profile_options = [
+            SelectOptionDict(value=subentry.subentry_id, label=subentry.data[CONF_NAME])
+            for subentry in entry.subentries.values()
+            if subentry.subentry_type == SUBENTRY_TYPE_PROFILE
+        ]
+        schema = _thermostat_data_schema(defaults, profile_options)
         return self.async_show_form(
             step_id="reconfigure" if reconfigure else "user",
             data_schema=schema,

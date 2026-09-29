@@ -54,6 +54,7 @@ from .const import (
     CONF_MIN_CYCLE_DURATION,
     CONF_MIN_TEMP,
     CONF_NAME,
+    CONF_PROFILE_ICON,
     CONF_PROFILE_TEMPERATURE,
     CONF_SCHEDULE,
     CONF_SENSOR_MAX_VALID,
@@ -62,6 +63,7 @@ from .const import (
     CONF_TARGET_TEMP_STEP,
     CONF_TEMP_SENSOR,
     CONF_WINDOW_OPEN_DELAY,
+    CONF_WINDOW_OPEN_PROFILE,
     CONF_WINDOW_SENSORS,
     DATA_FAILSAFE_STATES,
     DATA_WINDOW_OPEN_STATES,
@@ -80,7 +82,7 @@ HA_DOMAIN = "homeassistant"
 
 
 def _hub_profiles(entry: ConfigEntry) -> list[dict[str, Any]]:
-    """Return this hub's profile subentries as plain {name, temperature} dicts.
+    """Return this hub's profile subentries as plain dicts.
 
     A thermostat only ever sees the profiles of its own parent hub - each
     subentry belongs to exactly one config entry, so there's no way for a
@@ -88,8 +90,10 @@ def _hub_profiles(entry: ConfigEntry) -> list[dict[str, Any]]:
     """
     return [
         {
+            "id": subentry.subentry_id,
             "name": subentry.data[CONF_NAME],
             "temperature": subentry.data[CONF_PROFILE_TEMPERATURE],
+            "icon": subentry.data.get(CONF_PROFILE_ICON),
         }
         for subentry in entry.subentries.values()
         if subentry.subentry_type == SUBENTRY_TYPE_PROFILE
@@ -174,6 +178,10 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
         self._window_open_delay: timedelta | None = (
             timedelta(**raw_window_delay) if raw_window_delay else None
         )
+        # By stable subentry ID, not name, so renaming/reordering profiles
+        # later never breaks this link. A stale/never-set ID (deleted
+        # profile, or simply none picked) falls back to the eco temperature.
+        self._window_open_profile_id: str | None = data.get(CONF_WINDOW_OPEN_PROFILE)
         self._attr_hvac_mode: HVACMode = HVACMode.OFF
         self._attr_target_temperature: float = self._comfort_temp
         self._attr_preset_mode: str = PRESET_NONE
@@ -283,6 +291,14 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
                 return profile["temperature"]
         return None
 
+    def _profile_by_id(self, profile_id: str | None) -> dict[str, Any] | None:
+        if profile_id is None:
+            return None
+        for profile in self._profiles:
+            if profile["id"] == profile_id:
+                return profile
+        return None
+
     @property
     def preset_mode(self) -> str:
         # Only ever returned while a configured window/door sensor is
@@ -308,6 +324,20 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
             # rejects it below.
             modes = [*modes, PRESET_WINDOW_OPEN]
         return modes
+
+    @property
+    def icon(self) -> str | None:
+        # A profile's own icon (if it has one) shows on the entity itself -
+        # sidebar, history graph, more-info header - while it's the active
+        # preset. There's no way to show it specifically in the preset
+        # picker's own dropdown row for a dynamically-named preset like
+        # this (see the profile subentry's icon field for why).
+        profile = next(
+            (p for p in self._profiles if p["name"] == self._attr_preset_mode), None
+        )
+        if profile is not None and not self._window_pause_active:
+            return profile["icon"]
+        return None
 
     @property
     def current_temperature(self) -> float | None:
@@ -538,7 +568,8 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
         if self._attr_hvac_mode == HVACMode.OFF:
             return None
         if self._window_open:
-            return self._eco_temp
+            profile = self._profile_by_id(self._window_open_profile_id)
+            return profile["temperature"] if profile is not None else self._eco_temp
         if self._attr_hvac_mode == HVACMode.AUTO:
             return self._comfort_temp if self._schedule_active() else self._eco_temp
         if self._attr_hvac_mode == HVACMode.HEAT:

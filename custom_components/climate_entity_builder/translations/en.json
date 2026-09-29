@@ -35,6 +35,7 @@
             "min_cycle_duration": "Minimum switch cycle duration (optional)",
             "window_sensors": "Window/door sensors pausing heating (optional)",
             "window_open_delay": "Delay before pausing after a window opens (optional)",
+            "window_open_profile": "Profile to use while paused for a window (optional)",
             "comfort_temperature": "Comfort temperature (schedule on)",
             "eco_temperature": "Eco/setback temperature (schedule off)",
             "sensor_stale_timeout": "Failsafe delay after invalid sensor reading",
@@ -47,6 +48,7 @@
             "min_cycle_duration": "Prevents short-cycling the heater output.",
             "window_sensors": "While any of these is open, heating pauses and the eco/setback temperature is used instead of the normal setpoint.",
             "window_open_delay": "Ignores a brief opening; heating only pauses once a window has stayed open this long.",
+            "window_open_profile": "Which profile's temperature to use while paused. Left unset, the eco/setback temperature above is used instead.",
             "sensor_stale_timeout": "How long an unavailable/unknown/implausible reading is tolerated before the heater is forced off.",
             "sensor_min_valid_temp": "Readings below this value are treated as implausible.",
             "sensor_max_valid_temp": "Readings above this value are treated as implausible."
@@ -69,6 +71,7 @@
             "min_cycle_duration": "Minimum switch cycle duration (optional)",
             "window_sensors": "Window/door sensors pausing heating (optional)",
             "window_open_delay": "Delay before pausing after a window opens (optional)",
+            "window_open_profile": "Profile to use while paused for a window (optional)",
             "comfort_temperature": "Comfort temperature (schedule on)",
             "eco_temperature": "Eco/setback temperature (schedule off)",
             "sensor_stale_timeout": "Failsafe delay after invalid sensor reading",
@@ -98,7 +101,11 @@
           "description": "Define a custom preset, offered on every thermostat under this hub while in heat mode.",
           "data": {
             "name": "Name",
-            "temperature": "Temperature"
+            "temperature": "Temperature",
+            "icon": "Icon (optional)"
+          },
+          "data_description": {
+            "icon": "Shown on a thermostat itself while this profile is its active preset - not in the preset picker's own list, which can't show a custom icon for a dynamically-named preset."
           }
         },
         "reconfigure": {
@@ -106,7 +113,8 @@
           "description": "Update this profile.",
           "data": {
             "name": "Name",
-            "temperature": "Temperature"
+            "temperature": "Temperature",
+            "icon": "Icon (optional)"
           }
         }
       },

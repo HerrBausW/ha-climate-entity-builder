@@ -35,6 +35,7 @@
             "min_cycle_duration": "Minimale Schaltzeit (optional)",
             "window_sensors": "Fenster-/Türkontakte pausieren die Heizung (optional)",
             "window_open_delay": "Verzögerung bis zur Pause nach Fensteröffnung (optional)",
+            "window_open_profile": "Profil für die Pause bei offenem Fenster (optional)",
             "comfort_temperature": "Komforttemperatur (Zeitplan aktiv)",
             "eco_temperature": "Absenktemperatur (Zeitplan inaktiv)",
             "sensor_stale_timeout": "Failsafe-Verzögerung bei ungültigem Sensorwert",
@@ -47,6 +48,7 @@
             "min_cycle_duration": "Verhindert zu häufiges Takten des Heizungsausgangs.",
             "window_sensors": "Ist einer davon offen, pausiert die Heizung und die Absenktemperatur gilt statt des normalen Sollwerts.",
             "window_open_delay": "Ignoriert kurzes Öffnen; die Heizung pausiert erst, wenn ein Fenster so lange offen war.",
+            "window_open_profile": "Welches Profil während der Pause gilt. Bleibt es leer, wird stattdessen die obige Absenktemperatur verwendet.",
             "sensor_stale_timeout": "Wie lange ein unavailable/unknown/unplausibler Wert toleriert wird, bevor der Ausgang zwangsweise geschlossen wird.",
             "sensor_min_valid_temp": "Werte unterhalb dieser Grenze gelten als unplausibel.",
             "sensor_max_valid_temp": "Werte oberhalb dieser Grenze gelten als unplausibel."
@@ -69,6 +71,7 @@
             "min_cycle_duration": "Minimale Schaltzeit (optional)",
             "window_sensors": "Fenster-/Türkontakte pausieren die Heizung (optional)",
             "window_open_delay": "Verzögerung bis zur Pause nach Fensteröffnung (optional)",
+            "window_open_profile": "Profil für die Pause bei offenem Fenster (optional)",
             "comfort_temperature": "Komforttemperatur (Zeitplan aktiv)",
             "eco_temperature": "Absenktemperatur (Zeitplan inaktiv)",
             "sensor_stale_timeout": "Failsafe-Verzögerung bei ungültigem Sensorwert",
@@ -98,7 +101,11 @@
           "description": "Definiere eine eigene Voreinstellung, die auf jedem Thermostat unter diesem Hub im Heizen-Modus zur Auswahl steht.",
           "data": {
             "name": "Name",
-            "temperature": "Temperatur"
+            "temperature": "Temperatur",
+            "icon": "Icon (optional)"
+          },
+          "data_description": {
+            "icon": "Wird am Thermostat selbst angezeigt, solange dieses Profil die aktive Voreinstellung ist - nicht in der Auswahlliste der Voreinstellung selbst, die für einen dynamisch benannten Preset kein eigenes Icon zeigen kann."
           }
         },
         "reconfigure": {
@@ -106,7 +113,8 @@
           "description": "Dieses Profil aktualisieren.",
           "data": {
             "name": "Name",
-            "temperature": "Temperatur"
+            "temperature": "Temperatur",
+            "icon": "Icon (optional)"
           }
         }
       },

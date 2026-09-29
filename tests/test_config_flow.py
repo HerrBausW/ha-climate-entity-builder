@@ -135,16 +135,16 @@ def test_window_sensors_default_is_never_none() -> None:
     this one field's rendering in Reconfigure for an existing thermostat,
     even though a merely-absent key correctly falls back to []. Guard both.
     """
-    assert _marker_default(_thermostat_data_schema({}), CONF_WINDOW_SENSORS) == []
+    assert _marker_default(_thermostat_data_schema({}, []), CONF_WINDOW_SENSORS) == []
     assert (
         _marker_default(
-            _thermostat_data_schema({CONF_WINDOW_SENSORS: None}), CONF_WINDOW_SENSORS
+            _thermostat_data_schema({CONF_WINDOW_SENSORS: None}, []), CONF_WINDOW_SENSORS
         )
         == []
     )
     assert (
         _marker_default(
-            _thermostat_data_schema({CONF_WINDOW_SENSORS: ["binary_sensor.x"]}),
+            _thermostat_data_schema({CONF_WINDOW_SENSORS: ["binary_sensor.x"]}, []),
             CONF_WINDOW_SENSORS,
         )
         == ["binary_sensor.x"]

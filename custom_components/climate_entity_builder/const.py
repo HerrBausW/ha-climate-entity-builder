@@ -29,7 +29,9 @@ CONF_SENSOR_MIN_VALID = "sensor_min_valid_temp"
 CONF_SENSOR_MAX_VALID = "sensor_max_valid_temp"
 CONF_WINDOW_SENSORS = "window_sensors"
 CONF_WINDOW_OPEN_DELAY = "window_open_delay"
+CONF_WINDOW_OPEN_PROFILE = "window_open_profile"
 CONF_PROFILE_TEMPERATURE = "temperature"
+CONF_PROFILE_ICON = "icon"
 
 # --- Defaults ----------------------------------------------------------------
 
