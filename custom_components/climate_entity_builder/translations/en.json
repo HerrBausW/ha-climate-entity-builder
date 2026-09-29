@@ -35,7 +35,7 @@
             "min_cycle_duration": "Minimum switch cycle duration (optional)",
             "window_sensors": "Window/door sensors pausing heating (optional)",
             "window_open_delay": "Delay before pausing after a window opens (optional)",
-            "window_open_profile": "Profile to use while paused for a window (optional)",
+            "window_open_profile": "Profile for the window-open pause (optional, defaults to eco/setback temperature)",
             "comfort_temperature": "Comfort temperature (schedule on)",
             "eco_temperature": "Eco/setback temperature (schedule off)",
             "sensor_stale_timeout": "Failsafe delay after invalid sensor reading",
@@ -46,9 +46,9 @@
             "heater": "Turned on/off via the generic homeassistant.turn_on/turn_off services.",
             "schedule_entity": "A schedule.* entity. When active, the comfort temperature is used; otherwise the eco temperature.",
             "min_cycle_duration": "Prevents short-cycling the heater output.",
-            "window_sensors": "While any of these is open, heating pauses and the eco/setback temperature is used instead of the normal setpoint.",
+            "window_sensors": "While any of these is open, heating pauses and switches to a paused target temperature instead of the normal setpoint (see the profile field below for which one).",
             "window_open_delay": "Ignores a brief opening; heating only pauses once a window has stayed open this long.",
-            "window_open_profile": "Which profile's temperature to use while paused. Left unset, the eco/setback temperature above is used instead.",
+            "window_open_profile": "Sets the target temperature while paused for an open window (see the window/door sensors field above). Leave this empty to use the eco/setback temperature below instead - that's the only behavior there was before this field existed.",
             "sensor_stale_timeout": "How long an unavailable/unknown/implausible reading is tolerated before the heater is forced off.",
             "sensor_min_valid_temp": "Readings below this value are treated as implausible.",
             "sensor_max_valid_temp": "Readings above this value are treated as implausible."
@@ -71,12 +71,23 @@
             "min_cycle_duration": "Minimum switch cycle duration (optional)",
             "window_sensors": "Window/door sensors pausing heating (optional)",
             "window_open_delay": "Delay before pausing after a window opens (optional)",
-            "window_open_profile": "Profile to use while paused for a window (optional)",
+            "window_open_profile": "Profile for the window-open pause (optional, defaults to eco/setback temperature)",
             "comfort_temperature": "Comfort temperature (schedule on)",
             "eco_temperature": "Eco/setback temperature (schedule off)",
             "sensor_stale_timeout": "Failsafe delay after invalid sensor reading",
             "sensor_min_valid_temp": "Plausibility lower bound",
             "sensor_max_valid_temp": "Plausibility upper bound"
+          },
+          "data_description": {
+            "heater": "Turned on/off via the generic homeassistant.turn_on/turn_off services.",
+            "schedule_entity": "A schedule.* entity. When active, the comfort temperature is used; otherwise the eco temperature.",
+            "min_cycle_duration": "Prevents short-cycling the heater output.",
+            "window_sensors": "While any of these is open, heating pauses and switches to a paused target temperature instead of the normal setpoint (see the profile field below for which one).",
+            "window_open_delay": "Ignores a brief opening; heating only pauses once a window has stayed open this long.",
+            "window_open_profile": "Sets the target temperature while paused for an open window (see the window/door sensors field above). Leave this empty to use the eco/setback temperature below instead - that's the only behavior there was before this field existed.",
+            "sensor_stale_timeout": "How long an unavailable/unknown/implausible reading is tolerated before the heater is forced off.",
+            "sensor_min_valid_temp": "Readings below this value are treated as implausible.",
+            "sensor_max_valid_temp": "Readings above this value are treated as implausible."
           }
         }
       },
@@ -98,30 +109,37 @@
       "step": {
         "user": {
           "title": "Add profile",
-          "description": "Define a custom preset, offered on every thermostat under this hub while in heat mode.",
+          "description": "Define a custom preset: a name and a temperature. It's offered as an extra preset (alongside comfort/eco) on every thermostat under this hub, but only while a thermostat is in heat mode.",
           "data": {
             "name": "Name",
             "temperature": "Temperature",
             "icon": "Icon (optional)"
           },
           "data_description": {
+            "name": "Shown as the preset's name on every thermostat under this hub, e.g. \"Boost\" or \"Vacation\". Can't be one of the built-in preset names (none/comfort/eco/window_open).",
+            "temperature": "Applied as the target temperature the moment this preset is selected on a thermostat.",
             "icon": "Shown on a thermostat itself while this profile is its active preset - not in the preset picker's own list, which can't show a custom icon for a dynamically-named preset."
           }
         },
         "reconfigure": {
           "title": "Edit profile",
-          "description": "Update this profile.",
+          "description": "Update this profile. Renaming it is safe - any thermostat set up to use it while paused for an open window keeps working, since that's linked internally rather than by this name.",
           "data": {
             "name": "Name",
             "temperature": "Temperature",
             "icon": "Icon (optional)"
+          },
+          "data_description": {
+            "name": "Shown as the preset's name on every thermostat under this hub. Can't be one of the built-in preset names (none/comfort/eco/window_open).",
+            "temperature": "Applied as the target temperature the moment this preset is selected on a thermostat.",
+            "icon": "Shown on a thermostat itself while this profile is its active preset - not in the preset picker's own list, which can't show a custom icon for a dynamically-named preset."
           }
         }
       },
       "error": {
         "name_required": "Please enter a name.",
         "name_exists": "A profile with this name already exists.",
-        "name_reserved": "This name is reserved for a built-in preset."
+        "name_reserved": "This name is reserved for a built-in preset (none, comfort, eco, window_open) - pick a different one."
       }
     }
   },
