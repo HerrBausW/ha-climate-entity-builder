@@ -12,6 +12,7 @@ SUBENTRY_TYPE_PROFILE = "profile"
 # --- Config / subentry data keys -------------------------------------------------
 
 CONF_NAME = "name"
+CONF_AREA = "area_id"
 CONF_TEMP_SENSOR = "temperature_sensor"
 CONF_HUMIDITY_SENSOR = "humidity_sensor"
 CONF_HEATER = "heater"

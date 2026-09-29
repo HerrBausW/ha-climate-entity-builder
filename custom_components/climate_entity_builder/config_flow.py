@@ -19,6 +19,7 @@ from homeassistant.core import callback
 from homeassistant.data_entry_flow import section
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.selector import (
+    AreaSelector,
     DurationSelector,
     DurationSelectorConfig,
     EntitySelector,
@@ -30,6 +31,7 @@ from homeassistant.helpers.selector import (
 )
 
 from .const import (
+    CONF_AREA,
     CONF_COLD_TOLERANCE,
     CONF_COMFORT_TEMP,
     CONF_ECO_TEMP,
@@ -92,29 +94,28 @@ def _thermostat_data_schema(defaults: Mapping[str, Any]) -> vol.Schema:
     return vol.Schema(
         {
             vol.Required(CONF_NAME, default=d(CONF_NAME, "")): cv.string,
+            # A suggestion only: applied to the device just once, on first
+            # creation, and never overrides a later manual area change on
+            # the device page (see RoomThermostatClimate._async_maybe_set_area
+            # in climate.py).
+            vol.Optional(CONF_AREA, default=d(CONF_AREA, None)): vol.Any(
+                None, AreaSelector()
+            ),
             vol.Required(CONF_TEMP_SENSOR, default=d(CONF_TEMP_SENSOR, None)): EntitySelector(
                 EntitySelectorConfig(domain="sensor", device_class="temperature")
             ),
             vol.Required(CONF_HEATER, default=d(CONF_HEATER, None)): EntitySelector(
                 EntitySelectorConfig(domain=HEATER_DOMAINS)
             ),
-            vol.Required("sensors_schedule"): section(
-                vol.Schema(
-                    {
-                        vol.Optional(
-                            CONF_HUMIDITY_SENSOR, default=d(CONF_HUMIDITY_SENSOR, None)
-                        ): vol.Any(
-                            None,
-                            EntitySelector(
-                                EntitySelectorConfig(domain="sensor", device_class="humidity")
-                            ),
-                        ),
-                        vol.Optional(
-                            CONF_SCHEDULE, default=d(CONF_SCHEDULE, None)
-                        ): vol.Any(None, EntitySelector(EntitySelectorConfig(domain="schedule"))),
-                    }
-                ),
-                {"collapsed": False},
+            # A plain extra sensor reading on the entity, unrelated to any
+            # other field - kept flat/top-level with the other "what
+            # hardware makes up this thermostat" fields above, rather than
+            # sectioned with something it has no actual connection to.
+            vol.Optional(
+                CONF_HUMIDITY_SENSOR, default=d(CONF_HUMIDITY_SENSOR, None)
+            ): vol.Any(
+                None,
+                EntitySelector(EntitySelectorConfig(domain="sensor", device_class="humidity")),
             ),
             vol.Required(
                 CONF_MIN_TEMP, default=d(CONF_MIN_TEMP, DEFAULT_MIN_TEMP)
@@ -223,6 +224,13 @@ def _thermostat_data_schema(defaults: Mapping[str, Any]) -> vol.Schema:
             vol.Required("presets"): section(
                 vol.Schema(
                     {
+                        # The schedule decides which of these two the
+                        # thermostat uses in auto mode, so it's grouped with
+                        # them rather than with the unrelated humidity
+                        # sensor it used to sit next to.
+                        vol.Optional(
+                            CONF_SCHEDULE, default=d(CONF_SCHEDULE, None)
+                        ): vol.Any(None, EntitySelector(EntitySelectorConfig(domain="schedule"))),
                         vol.Required(
                             CONF_COMFORT_TEMP,
                             default=d(CONF_COMFORT_TEMP, DEFAULT_COMFORT_TEMP),
@@ -278,7 +286,7 @@ def _thermostat_data_schema(defaults: Mapping[str, Any]) -> vol.Schema:
     )
 
 
-_THERMOSTAT_SECTION_KEYS = ("sensors_schedule", "hysteresis", "window_pause", "presets")
+_THERMOSTAT_SECTION_KEYS = ("hysteresis", "window_pause", "presets")
 
 
 def _flatten_sections(user_input: dict[str, Any]) -> dict[str, Any]:

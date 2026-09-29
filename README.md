@@ -100,12 +100,15 @@ introduced in HA 2025.7).
    </p>
 
    - Name (e.g. `Kitchen`)
+   - Area (optional) — assigned to the device once, right now; a later
+     manual reassignment on the device's own page always takes precedence
+     over changing this field again
    - Temperature sensor (`device_class: temperature`)
    - Heater output (a `switch.*` or `input_boolean.*`)
    - Optional: humidity sensor, schedule, min/max temperature, step size,
      cold/hot tolerance, minimum cycle duration, window/door sensors with
-     an open delay, comfort/eco temperature, failsafe delay and
-     plausibility bounds.
+     an open delay and window-open temperature, comfort/eco temperature,
+     failsafe delay and plausibility bounds.
 3. Repeat step 2 for every room. Each one becomes its own device with a
    `climate.*` entity.
 4. To change a thermostat's configuration later, or to remove it, use the

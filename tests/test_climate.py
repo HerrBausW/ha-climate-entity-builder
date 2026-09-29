@@ -12,14 +12,14 @@ from homeassistant.components.climate import (
 )
 from homeassistant.const import ATTR_TEMPERATURE
 from homeassistant.core import State
-from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers import area_registry as ar, device_registry as dr, entity_registry as er
 import homeassistant.util.dt as dt_util
 from pytest_homeassistant_custom_component.common import (
     async_fire_time_changed,
     mock_restore_cache,
 )
 
-from custom_components.climate_entity_builder.const import ATTR_FAILSAFE_ACTIVE
+from custom_components.climate_entity_builder.const import ATTR_FAILSAFE_ACTIVE, CONF_AREA, DOMAIN
 
 from .helpers import (
     HEATER,
@@ -225,3 +225,38 @@ async def test_restart_restores_hvac_mode_and_temperature(hass) -> None:
     assert state.state == HVACMode.HEAT
     assert state.attributes[ATTR_TEMPERATURE] == 22.0
     assert hass.states.get(HEATER).state == "on"
+
+
+def _device_for(hass, subentry_id: str):
+    registry = dr.async_get(hass)
+    return registry.async_get_device(identifiers={(DOMAIN, subentry_id)})
+
+
+async def test_area_suggestion_applied_on_first_setup(hass) -> None:
+    """Item: the configured area is applied to the device when first created."""
+    area = ar.async_get(hass).async_get_or_create("Schlafzimmer")
+    await async_setup_base(hass, temperature=19.0)
+    entry = await _setup(hass, **{CONF_AREA: area.id})
+    subentry_id = next(iter(entry.subentries))
+
+    device = _device_for(hass, subentry_id)
+    assert device is not None
+    assert device.area_id == area.id
+
+
+async def test_area_suggestion_does_not_override_manual_reassignment(hass) -> None:
+    """A manual area change on the device page must survive a reload."""
+    suggested = ar.async_get(hass).async_get_or_create("Schlafzimmer")
+    manual = ar.async_get(hass).async_get_or_create("Büro")
+    await async_setup_base(hass, temperature=19.0)
+    entry = await _setup(hass, **{CONF_AREA: suggested.id})
+    subentry_id = next(iter(entry.subentries))
+
+    device = _device_for(hass, subentry_id)
+    dr.async_get(hass).async_update_device(device.id, area_id=manual.id)
+
+    await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+
+    device = _device_for(hass, subentry_id)
+    assert device.area_id == manual.id

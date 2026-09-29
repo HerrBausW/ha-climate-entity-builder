@@ -78,10 +78,7 @@ def sectioned_thermostat_data(**overrides: Any) -> dict[str, Any]:
         CONF_NAME: flat[CONF_NAME],
         CONF_TEMP_SENSOR: flat[CONF_TEMP_SENSOR],
         CONF_HEATER: flat[CONF_HEATER],
-        "sensors_schedule": {
-            CONF_HUMIDITY_SENSOR: flat.get(CONF_HUMIDITY_SENSOR),
-            CONF_SCHEDULE: flat.get(CONF_SCHEDULE),
-        },
+        CONF_HUMIDITY_SENSOR: flat.get(CONF_HUMIDITY_SENSOR),
         CONF_MIN_TEMP: flat[CONF_MIN_TEMP],
         CONF_MAX_TEMP: flat[CONF_MAX_TEMP],
         "hysteresis": {
@@ -98,6 +95,7 @@ def sectioned_thermostat_data(**overrides: Any) -> dict[str, Any]:
             ),
         },
         "presets": {
+            CONF_SCHEDULE: flat.get(CONF_SCHEDULE),
             CONF_COMFORT_TEMP: flat[CONF_COMFORT_TEMP],
             CONF_ECO_TEMP: flat[CONF_ECO_TEMP],
         },

@@ -33,6 +33,7 @@ from homeassistant.core import (
     callback,
 )
 from homeassistant.exceptions import ServiceValidationError
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
@@ -44,6 +45,7 @@ from .const import (
     ATTR_EFFECTIVE_TARGET_TEMPERATURE,
     ATTR_FAILSAFE_ACTIVE,
     ATTR_WINDOW_OPEN,
+    CONF_AREA,
     CONF_COLD_TOLERANCE,
     CONF_COMFORT_TEMP,
     CONF_ECO_TEMP,
@@ -151,6 +153,14 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
             manufacturer=MANUFACTURER,
             model="Virtual Room Thermostat",
         )
+        # Applied in async_added_to_hass, once the device is guaranteed to
+        # be registered. Not using DeviceInfo's suggested_area: HA core
+        # treats that as an area *name* (async_get_or_create(suggested_area)
+        # looks up/creates by name, not ID, and our AreaSelector field
+        # returns an ID), and it's deprecated for removal in HA 2026.9
+        # regardless. This does the same "one-time suggestion, never
+        # overrides a manual change" job through the current area_id API.
+        self._suggested_area_id: str | None = data.get(CONF_AREA)
 
         self._temp_sensor_entity_id: str = data[CONF_TEMP_SENSOR]
         self._humidity_sensor_entity_id: str | None = data.get(CONF_HUMIDITY_SENSOR)
@@ -199,9 +209,24 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
 
     # --- restore / setup -----------------------------------------------------
 
+    def _async_maybe_set_area(self) -> None:
+        """Apply the configured area suggestion, but only the first time.
+
+        Only sets it while the device has no area at all yet, so a manual
+        change made afterwards on the device page is never overridden by
+        this running again on every reload.
+        """
+        registry = dr.async_get(self.hass)
+        device = registry.async_get_device(identifiers={(DOMAIN, self._subentry_id)})
+        if device is not None and device.area_id is None:
+            registry.async_update_device(device.id, area_id=self._suggested_area_id)
+
     async def async_added_to_hass(self) -> None:
         """Restore previous state and start listening for updates."""
         await super().async_added_to_hass()
+
+        if self._suggested_area_id:
+            self._async_maybe_set_area()
 
         last_state = await self.async_get_last_state()
         if last_state is not None:

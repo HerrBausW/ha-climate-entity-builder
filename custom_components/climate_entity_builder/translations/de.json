@@ -23,48 +23,59 @@
           "description": "Baue ein virtuelles Raumthermostat aus vorhandenen Sensoren und einem Schalter.",
           "data": {
             "name": "Name",
+            "area_id": "Bereich (optional)",
             "temperature_sensor": "Temperatursensor",
             "heater": "Heizungsausgang (switch/input_boolean)",
             "humidity_sensor": "Luftfeuchtigkeitssensor (optional)",
-            "schedule_entity": "Zeitplan für Auto-Modus (optional)",
             "min_temp": "Minimale Solltemperatur",
             "max_temp": "Maximale Solltemperatur",
-            "target_temp_step": "Schrittweite des Sollwerts",
-            "cold_tolerance": "Einschalttoleranz (Heizen unter Sollwert)",
-            "hot_tolerance": "Ausschalttoleranz (Aus über Sollwert)",
-            "min_cycle_duration": "Minimale Schaltzeit (optional)",
-            "window_sensors": "Fenster-/Türkontakte pausieren die Heizung (optional)",
-            "window_open_delay": "Verzögerung bis zur Pause nach Fensteröffnung (optional)",
-            "window_open_temperature": "Fenster-offen-Temperatur",
-            "comfort_temperature": "Komforttemperatur (Zeitplan aktiv)",
-            "eco_temperature": "Absenktemperatur (Zeitplan inaktiv)",
             "sensor_stale_timeout": "Failsafe-Verzögerung bei ungültigem Sensorwert",
             "sensor_min_valid_temp": "Untere Plausibilitätsgrenze",
             "sensor_max_valid_temp": "Obere Plausibilitätsgrenze"
           },
           "data_description": {
+            "area_id": "Weist dem Gerät jetzt einmalig diesen Bereich zu. Eine spätere Änderung hier hat keine Wirkung mehr, sobald du das Gerät zwischenzeitlich manuell auf seiner eigenen Seite neu zugewiesen hast - diese manuelle Wahl hat immer Vorrang.",
             "heater": "Wird über die generischen Dienste homeassistant.turn_on/turn_off geschaltet.",
-            "schedule_entity": "Eine schedule.*-Entity. Ist sie aktiv, gilt die Komforttemperatur, sonst die Absenktemperatur.",
-            "min_cycle_duration": "Verhindert zu häufiges Takten des Heizungsausgangs.",
-            "window_sensors": "Ist einer davon offen, pausiert die Heizung und wechselt auf die Fenster-offen-Temperatur weiter unten statt des normalen Sollwerts.",
-            "window_open_delay": "Ignoriert kurzes Öffnen; die Heizung pausiert erst, wenn ein Fenster so lange offen war.",
-            "window_open_temperature": "Zieltemperatur, während die Heizung wegen eines offenen Fensters pausiert (siehe Fenster-/Türkontakte oben).",
             "sensor_stale_timeout": "Wie lange ein unavailable/unknown/unplausibler Wert toleriert wird, bevor der Ausgang zwangsweise geschlossen wird.",
             "sensor_min_valid_temp": "Werte unterhalb dieser Grenze gelten als unplausibel.",
             "sensor_max_valid_temp": "Werte oberhalb dieser Grenze gelten als unplausibel."
           },
           "sections": {
-            "sensors_schedule": {
-              "name": "Optionale Sensoren & Zeitplan"
-            },
             "hysteresis": {
-              "name": "Hysterese & Schaltzyklus"
+              "name": "Hysterese & Schaltzyklus",
+              "data": {
+                "target_temp_step": "Schrittweite des Sollwerts",
+                "cold_tolerance": "Einschalttoleranz (Heizen unter Sollwert)",
+                "hot_tolerance": "Ausschalttoleranz (Aus über Sollwert)",
+                "min_cycle_duration": "Minimale Schaltzeit (optional)"
+              },
+              "data_description": {
+                "min_cycle_duration": "Verhindert zu häufiges Takten des Heizungsausgangs."
+              }
             },
             "window_pause": {
-              "name": "Fensterpause"
+              "name": "Fensterpause",
+              "data": {
+                "window_sensors": "Fenster-/Türkontakte pausieren die Heizung (optional)",
+                "window_open_delay": "Verzögerung bis zur Pause nach Fensteröffnung (optional)",
+                "window_open_temperature": "Fenster-offen-Temperatur"
+              },
+              "data_description": {
+                "window_sensors": "Ist einer davon offen, pausiert die Heizung und wechselt auf die Fenster-offen-Temperatur weiter unten statt des normalen Sollwerts.",
+                "window_open_delay": "Ignoriert kurzes Öffnen; die Heizung pausiert erst, wenn ein Fenster so lange offen war.",
+                "window_open_temperature": "Zieltemperatur, während die Heizung wegen eines offenen Fensters pausiert."
+              }
             },
             "presets": {
-              "name": "Voreinstellungen"
+              "name": "Voreinstellungen & Zeitplan",
+              "data": {
+                "schedule_entity": "Zeitplan für Auto-Modus (optional)",
+                "comfort_temperature": "Komforttemperatur (Zeitplan aktiv)",
+                "eco_temperature": "Absenktemperatur (Zeitplan inaktiv)"
+              },
+              "data_description": {
+                "schedule_entity": "Eine schedule.*-Entity. Ist sie aktiv, gilt die Komforttemperatur, sonst die Absenktemperatur."
+              }
             }
           }
         },
@@ -73,48 +84,59 @@
           "description": "Konfiguration dieses Thermostats aktualisieren.",
           "data": {
             "name": "Name",
+            "area_id": "Bereich (optional)",
             "temperature_sensor": "Temperatursensor",
             "heater": "Heizungsausgang (switch/input_boolean)",
             "humidity_sensor": "Luftfeuchtigkeitssensor (optional)",
-            "schedule_entity": "Zeitplan für Auto-Modus (optional)",
             "min_temp": "Minimale Solltemperatur",
             "max_temp": "Maximale Solltemperatur",
-            "target_temp_step": "Schrittweite des Sollwerts",
-            "cold_tolerance": "Einschalttoleranz (Heizen unter Sollwert)",
-            "hot_tolerance": "Ausschalttoleranz (Aus über Sollwert)",
-            "min_cycle_duration": "Minimale Schaltzeit (optional)",
-            "window_sensors": "Fenster-/Türkontakte pausieren die Heizung (optional)",
-            "window_open_delay": "Verzögerung bis zur Pause nach Fensteröffnung (optional)",
-            "window_open_temperature": "Fenster-offen-Temperatur",
-            "comfort_temperature": "Komforttemperatur (Zeitplan aktiv)",
-            "eco_temperature": "Absenktemperatur (Zeitplan inaktiv)",
             "sensor_stale_timeout": "Failsafe-Verzögerung bei ungültigem Sensorwert",
             "sensor_min_valid_temp": "Untere Plausibilitätsgrenze",
             "sensor_max_valid_temp": "Obere Plausibilitätsgrenze"
           },
           "data_description": {
+            "area_id": "Wirkt nur, solange das Gerät noch keinen Bereich hat (z.B. nie gesetzt, oder das Thermostat ist älter als dieses Feld). Ist einmal ein Bereich gesetzt - hierüber oder manuell - hat eine Änderung hier keine Wirkung mehr; nutze dafür die eigene Seite des Geräts.",
             "heater": "Wird über die generischen Dienste homeassistant.turn_on/turn_off geschaltet.",
-            "schedule_entity": "Eine schedule.*-Entity. Ist sie aktiv, gilt die Komforttemperatur, sonst die Absenktemperatur.",
-            "min_cycle_duration": "Verhindert zu häufiges Takten des Heizungsausgangs.",
-            "window_sensors": "Ist einer davon offen, pausiert die Heizung und wechselt auf die Fenster-offen-Temperatur weiter unten statt des normalen Sollwerts.",
-            "window_open_delay": "Ignoriert kurzes Öffnen; die Heizung pausiert erst, wenn ein Fenster so lange offen war.",
-            "window_open_temperature": "Zieltemperatur, während die Heizung wegen eines offenen Fensters pausiert (siehe Fenster-/Türkontakte oben).",
             "sensor_stale_timeout": "Wie lange ein unavailable/unknown/unplausibler Wert toleriert wird, bevor der Ausgang zwangsweise geschlossen wird.",
             "sensor_min_valid_temp": "Werte unterhalb dieser Grenze gelten als unplausibel.",
             "sensor_max_valid_temp": "Werte oberhalb dieser Grenze gelten als unplausibel."
           },
           "sections": {
-            "sensors_schedule": {
-              "name": "Optionale Sensoren & Zeitplan"
-            },
             "hysteresis": {
-              "name": "Hysterese & Schaltzyklus"
+              "name": "Hysterese & Schaltzyklus",
+              "data": {
+                "target_temp_step": "Schrittweite des Sollwerts",
+                "cold_tolerance": "Einschalttoleranz (Heizen unter Sollwert)",
+                "hot_tolerance": "Ausschalttoleranz (Aus über Sollwert)",
+                "min_cycle_duration": "Minimale Schaltzeit (optional)"
+              },
+              "data_description": {
+                "min_cycle_duration": "Verhindert zu häufiges Takten des Heizungsausgangs."
+              }
             },
             "window_pause": {
-              "name": "Fensterpause"
+              "name": "Fensterpause",
+              "data": {
+                "window_sensors": "Fenster-/Türkontakte pausieren die Heizung (optional)",
+                "window_open_delay": "Verzögerung bis zur Pause nach Fensteröffnung (optional)",
+                "window_open_temperature": "Fenster-offen-Temperatur"
+              },
+              "data_description": {
+                "window_sensors": "Ist einer davon offen, pausiert die Heizung und wechselt auf die Fenster-offen-Temperatur weiter unten statt des normalen Sollwerts.",
+                "window_open_delay": "Ignoriert kurzes Öffnen; die Heizung pausiert erst, wenn ein Fenster so lange offen war.",
+                "window_open_temperature": "Zieltemperatur, während die Heizung wegen eines offenen Fensters pausiert."
+              }
             },
             "presets": {
-              "name": "Voreinstellungen"
+              "name": "Voreinstellungen & Zeitplan",
+              "data": {
+                "schedule_entity": "Zeitplan für Auto-Modus (optional)",
+                "comfort_temperature": "Komforttemperatur (Zeitplan aktiv)",
+                "eco_temperature": "Absenktemperatur (Zeitplan inaktiv)"
+              },
+              "data_description": {
+                "schedule_entity": "Eine schedule.*-Entity. Ist sie aktiv, gilt die Komforttemperatur, sonst die Absenktemperatur."
+              }
             }
           }
         }
