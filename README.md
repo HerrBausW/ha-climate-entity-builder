@@ -151,6 +151,14 @@ introduced in HA 2025.7).
 Setpoint step size, cold/hot tolerance and an optional minimum switch cycle
 duration — see [Hysteresis](#hysteresis).
 
+</td>
+<td valign="top">
+<img src="https://raw.githubusercontent.com/HerrBausW/ha-climate-entity-builder/main/images/add-thermostat-3.png" alt="Add thermostat: hysteresis and switch cycling group, expanded">
+</td>
+</tr>
+<tr>
+<td valign="top">
+
 **Window pause**
 
 Window/door sensors, an optional open delay and the window-open
@@ -158,7 +166,7 @@ temperature — see [Window contacts](#window-contacts).
 
 </td>
 <td valign="top">
-<img src="https://raw.githubusercontent.com/HerrBausW/ha-climate-entity-builder/main/images/add-thermostat-3.png" alt="Add thermostat: hysteresis group (collapsed) and window pause group">
+<img src="https://raw.githubusercontent.com/HerrBausW/ha-climate-entity-builder/main/images/add-thermostat-4.png" alt="Add thermostat: window pause group">
 </td>
 </tr>
 <tr>
@@ -172,7 +180,7 @@ are also available as presets in `heat` mode — see [Modes](#modes).
 
 </td>
 <td valign="top">
-<img src="https://raw.githubusercontent.com/HerrBausW/ha-climate-entity-builder/main/images/add-thermostat-4.png" alt="Add thermostat: schedule, comfort and eco temperature">
+<img src="https://raw.githubusercontent.com/HerrBausW/ha-climate-entity-builder/main/images/add-thermostat-5.png" alt="Add thermostat: schedule, comfort and eco temperature">
 </td>
 </tr>
 <tr>
@@ -186,7 +194,7 @@ forced off, and the plausibility bounds a reading must stay within — see
 
 </td>
 <td valign="top">
-<img src="https://raw.githubusercontent.com/HerrBausW/ha-climate-entity-builder/main/images/add-thermostat-5.png" alt="Add thermostat: failsafe delay and plausibility bounds">
+<img src="https://raw.githubusercontent.com/HerrBausW/ha-climate-entity-builder/main/images/add-thermostat-6.png" alt="Add thermostat: failsafe delay and plausibility bounds">
 </td>
 </tr>
 </table>
@@ -254,6 +262,10 @@ German UI) shows **Window open** in place of the normal comfort/eco/none
 value. It can't be selected manually. Your actual
 setpoint and preset underneath are untouched and reassert themselves the
 moment the window closes — nothing to reset manually.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/HerrBausW/ha-climate-entity-builder/main/images/window-open.png" width="360" alt="Climate card while a window is open: the target temperature drops to the window-open temperature and the preset chip shows Window open">
+</p>
 
 ## Custom preset profiles
 
