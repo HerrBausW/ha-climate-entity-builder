@@ -49,20 +49,24 @@ companion sensors, so it fits right into an existing maintenance dashboard.
 - `off` / `heat` / `auto` HVAC modes, with configurable hysteresis in `heat`
   and a schedule-driven setpoint in `auto`.
 - Optional humidity sensor, shown as `current_humidity` on the same entity.
+- Optional **offsets** for the temperature and humidity sensor, to correct a
+  sensor that reads too high or too low.
 - `comfort`/`eco` presets plus any number of your own **custom preset
   profiles** (name + temperature) while in `heat` mode (hidden in `auto`,
   where the schedule is the single source of truth for the setpoint).
 - Sensor failsafe with a configurable grace period and plausibility bounds —
   a brief glitch never cuts the heat, a genuinely dead sensor does.
-- Optional window/door contacts pause heating down to the eco/setback
-  temperature — regulated, not just switched fully off.
+- Optional window/door contacts pause heating and switch to a dedicated
+  **window-open temperature** — regulated, not just switched fully off.
+- Optional **area** assignment when adding a thermostat.
 - Companion `binary_sensor` entities per thermostat for maintenance
   dashboards: **heating activity**, **failsafe**, and (if configured)
-  **window open**.
+  **window pause active**.
 - The entity id is derived directly from the name you enter (`Bedroom` →
   `climate.bedroom`), matching how people already name a manual thermostat.
 - Fully event-driven (no polling), restores HVAC mode and setpoint across a
   Home Assistant restart.
+- English and German UI, and a downloadable diagnostics report.
 
 ## Requirements
 
@@ -91,29 +95,33 @@ introduced in HA 2025.7).
    Builder**. Give the hub a name — one hub is enough for most setups, but
    you can add more (e.g. one per floor) if you want separate sets of
    custom preset profiles (see [below](#custom-preset-profiles)).
-2. On the hub's page, click **Add thermostat** and fill in the form:
+2. On the hub's page, click **Add thermostat** and fill in the form. Fields
+   that aren't self-explanatory have a short explanation underneath. Required
+   are only the name, the temperature sensor and the heater output;
+   everything else has a sensible default:
 
-   <p align="center">
-     <img src="https://raw.githubusercontent.com/HerrBausW/ha-climate-entity-builder/main/images/add-thermostat-1.png" width="31%" alt="Add thermostat: name, temperature sensor, heater, humidity sensor, schedule">
-     <img src="https://raw.githubusercontent.com/HerrBausW/ha-climate-entity-builder/main/images/add-thermostat-2.png" width="31%" alt="Add thermostat: min/max temperature, step, tolerances, comfort/eco temperature">
-     <img src="https://raw.githubusercontent.com/HerrBausW/ha-climate-entity-builder/main/images/add-thermostat-3.png" width="31%" alt="Add thermostat: minimum cycle duration, failsafe delay, plausibility bounds">
-   </p>
-
-   - Name (e.g. `Kitchen`)
-   - Area (optional) — assigned to the device once, right now; a later
+   - **Name** (e.g. `Kitchen`)
+   - **Area** (optional) — assigned to the device once, right now; a later
      manual reassignment on the device's own page always takes precedence
      over changing this field again
-   - Temperature sensor (`device_class: temperature`), with an optional
+   - **Temperature sensor** (`device_class: temperature`) with an optional
      **temperature offset** (default 0 °C) to correct a sensor that reads
      too warm or too cold. The offset applies to what's shown and to
      regulation; the failsafe plausibility bounds still judge the raw
      reading, so an offset can never hide a dead sensor.
-   - Heater output (a `switch.*` or `input_boolean.*`)
-   - Optional: humidity sensor (with its own **humidity offset**, default
-     0 %, result kept within 0–100 %), schedule, min/max temperature, step size,
-     cold/hot tolerance, minimum cycle duration, window/door sensors with
-     an open delay and window-open temperature, comfort/eco temperature,
-     failsafe delay and plausibility bounds.
+   - **Heater output** (a `switch.*` or `input_boolean.*`)
+   - **Humidity sensor** (optional) with its own **humidity offset**
+     (default 0 %, result kept within 0–100 %)
+   - **Minimum / maximum temperature** that can be set
+   - Collapsible groups:
+     - *Hysteresis & switch cycling* — setpoint step size, cold/hot
+       tolerance, optional minimum switch cycle duration
+     - *Window pause* — window/door sensors, an optional open delay and the
+       window-open temperature
+     - *Presets & schedule* — optional schedule for `auto` mode, comfort and
+       eco temperature
+   - **Failsafe** — delay after an invalid reading and the plausibility
+     bounds
 3. Repeat step 2 for every room. Each one becomes its own device with a
    `climate.*` entity.
 4. To change a thermostat's configuration later, or to remove it, use the
@@ -163,6 +171,10 @@ forcing the heater output off. A brief glitch that clears within the delay
 never touches the output. Once a valid reading arrives, normal control
 resumes immediately and the failsafe attribute clears.
 
+The plausibility bounds are checked against the sensor's **raw** reading,
+before the temperature offset is applied — an offset can never move a bad
+reading back into range and hide a dead sensor.
+
 ## Window contacts
 
 Optionally select one or more `binary_sensor.*` window/door contacts and set
@@ -173,8 +185,9 @@ doesn't just switch fully off, so the room still gets a minimal amount of
 heat. This only applies while the thermostat is in `heat`/`auto`; if it's
 `off`, it stays `off` regardless of any window.
 
-While paused, the **Voreinstellung**/preset chip on the climate card shows
-**Window open** in place of the normal comfort/eco/none value. Your actual
+While paused, the preset chip on the climate card (*Voreinstellung* in a
+German UI) shows **Window open** in place of the normal comfort/eco/none
+value. It can't be selected manually. Your actual
 setpoint and preset underneath are untouched and reassert themselves the
 moment the window closes — nothing to reset manually.
 
@@ -203,11 +216,16 @@ Every thermostat device carries read-only `binary_sensor` entities alongside
 the `climate` entity, so it slots into a maintenance dashboard the same way a
 wall-mounted thermostat's status entities would:
 
-| Entity | Reflects | Device class |
+| Name (EN / DE) | Reflects | Device class |
 |---|---|---|
-| `binary_sensor.<room>_heizaktivitat` | the real heater output (`switch`/`input_boolean`), not the HVAC mode | — |
-| `binary_sensor.<room>_failsafe` | whether this thermostat's failsafe is currently engaged | `problem` |
-| `binary_sensor.<room>_window_open` | whether heating is currently paused for an open window, i.e. after the configured delay has elapsed — not a live mirror of the raw contact sensor (only created if window sensors are configured) | `window` |
+| Heating activity / Heizaktivität | the real heater output (`switch`/`input_boolean`), not the HVAC mode | — |
+| Failsafe / Failsafe | whether this thermostat's failsafe is currently engaged | `problem` |
+| Window pause active / Fensterpause aktiv | whether heating is currently paused for an open window, i.e. after the configured delay has elapsed — not a live mirror of the raw contact sensor (only created if window sensors are configured) | `window` |
+
+Their entity ids are `binary_sensor.<room>_<name>`, built from the name in
+the language Home Assistant was set to *when the thermostat was created*
+(e.g. `binary_sensor.kitchen_heizaktivitat` on a German setup) — check the
+device page for the exact id.
 
 ## Known limitations
 
@@ -218,6 +236,16 @@ wall-mounted thermostat's status entities would:
   design, to avoid two conflicting ways to pick the setpoint.
 - The heater output must already exist as a `switch.*` or `input_boolean.*`
   entity; multiple actuators per room are not yet supported.
+- A custom profile has one temperature for every thermostat under its hub;
+  there's no per-room override. Use a separate hub if an area needs its own.
+- If a profile is renamed or deleted while it's a thermostat's active
+  preset, that thermostat falls back to `none` (the hub reloads right after
+  such a change).
+- The window-open temperature is set per thermostat (not shared through a
+  profile).
+- A custom profile's icon can't be shown inside the preset picker's own
+  dropdown (a Home Assistant limitation for dynamically named presets); it
+  appears on the entity itself while that profile is active.
 
 ## Example configuration
 
