@@ -39,7 +39,7 @@
             "sensor_max_valid_temp": "Obere Plausibilitätsgrenze"
           },
           "data_description": {
-            "name": "Name des Thermostats. Er wird zum Gerätenamen und zur Entity-ID, z.B. ergibt „Schlafzimmer“ climate.schlafzimmer.",
+            "name": "Name des Thermostats. Er wird zum Gerätenamen und zur Entity-ID; aus „Schlafzimmer“ wird z.B. climate.schlafzimmer.",
             "area_id": "Weist dem Gerät jetzt einmalig diesen Bereich zu. Eine spätere Änderung hier hat keine Wirkung mehr, sobald du das Gerät zwischenzeitlich manuell auf seiner eigenen Seite neu zugewiesen hast - diese manuelle Wahl hat immer Vorrang.",
             "temperature_sensor": "Der Sensor, der die Raumtemperatur misst (Geräteklasse Temperatur).",
             "temperature_offset": "Wird auf jede Messung des Temperatursensors addiert, bevor sie angezeigt und zum Regeln verwendet wird, z.B. -0,5 wenn der Sensor ein halbes Grad zu warm misst. Die Failsafe-Plausibilitätsgrenzen unten beurteilen weiterhin den Rohwert.",
@@ -114,7 +114,7 @@
             "sensor_max_valid_temp": "Obere Plausibilitätsgrenze"
           },
           "data_description": {
-            "name": "Name des Thermostats. Er wird zum Gerätenamen und zur Entity-ID, z.B. ergibt „Schlafzimmer“ climate.schlafzimmer.",
+            "name": "Name des Thermostats. Er wird zum Gerätenamen und zur Entity-ID; aus „Schlafzimmer“ wird z.B. climate.schlafzimmer.",
             "area_id": "Wirkt nur, solange das Gerät noch keinen Bereich hat (z.B. nie gesetzt, oder das Thermostat ist älter als dieses Feld). Ist einmal ein Bereich gesetzt - hierüber oder manuell - hat eine Änderung hier keine Wirkung mehr; nutze dafür die eigene Seite des Geräts.",
             "temperature_sensor": "Der Sensor, der die Raumtemperatur misst (Geräteklasse Temperatur).",
             "temperature_offset": "Wird auf jede Messung des Temperatursensors addiert, bevor sie angezeigt und zum Regeln verwendet wird, z.B. -0,5 wenn der Sensor ein halbes Grad zu warm misst. Die Failsafe-Plausibilitätsgrenzen unten beurteilen weiterhin den Rohwert.",

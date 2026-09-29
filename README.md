@@ -95,37 +95,101 @@ introduced in HA 2025.7).
    Builder**. Give the hub a name — one hub is enough for most setups, but
    you can add more (e.g. one per floor) if you want separate sets of
    custom preset profiles (see [below](#custom-preset-profiles)).
-2. On the hub's page, click **Add thermostat** and fill in the form. Fields
-   that aren't self-explanatory have a short explanation underneath. Required
-   are only the name, the temperature sensor and the heater output;
-   everything else has a sensible default:
-
-   - **Name** (e.g. `Kitchen`)
-   - **Area** (optional) — assigned to the device once, right now; a later
-     manual reassignment on the device's own page always takes precedence
-     over changing this field again
-   - **Temperature sensor** (`device_class: temperature`) with an optional
-     **temperature offset** (default 0 °C) to correct a sensor that reads
-     too warm or too cold. The offset applies to what's shown and to
-     regulation; the failsafe plausibility bounds still judge the raw
-     reading, so an offset can never hide a dead sensor.
-   - **Heater output** (a `switch.*` or `input_boolean.*`)
-   - **Humidity sensor** (optional) with its own **humidity offset**
-     (default 0 %, result kept within 0–100 %)
-   - **Minimum / maximum temperature** that can be set
-   - Collapsible groups:
-     - *Hysteresis & switch cycling* — setpoint step size, cold/hot
-       tolerance, optional minimum switch cycle duration
-     - *Window pause* — window/door sensors, an optional open delay and the
-       window-open temperature
-     - *Presets & schedule* — optional schedule for `auto` mode, comfort and
-       eco temperature
-   - **Failsafe** — delay after an invalid reading and the plausibility
-     bounds
+2. On the hub's page, click **Add thermostat** and fill in the form (walked
+   through below). Only the name, the temperature sensor and the heater
+   output are required; everything else has a sensible default, and every
+   field has a short explanation underneath it.
 3. Repeat step 2 for every room. Each one becomes its own device with a
    `climate.*` entity.
 4. To change a thermostat's configuration later, or to remove it, use the
    device's own menu (**Reconfigure** / **Delete**) — no YAML involved.
+
+### The thermostat form
+
+<table>
+<tr>
+<td valign="top" width="50%">
+
+**Basics**
+
+- **Name** (e.g. `Kitchen`) — becomes the device name and the entity id.
+- **Area** (optional) — assigned to the device once, right now; a later
+  manual reassignment on the device's own page always takes precedence
+  over changing this field again.
+- **Temperature sensor** (`device_class: temperature`) with an optional
+  **temperature offset** (default 0 °C) to correct a sensor that reads too
+  warm or too cold. The offset applies to what's shown and to regulation;
+  the failsafe plausibility bounds still judge the raw reading, so an
+  offset can never hide a dead sensor.
+- **Heater output** — a `switch.*` or `input_boolean.*`.
+
+</td>
+<td valign="top" width="50%">
+<img src="https://raw.githubusercontent.com/HerrBausW/ha-climate-entity-builder/main/images/add-thermostat-1.png" alt="Add thermostat: name, area, temperature sensor with offset, heater output">
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+**Humidity and range**
+
+- **Humidity sensor** (optional) with its own **humidity offset** (default
+  0 %, result kept within 0–100 %). It's only shown on the entity and has
+  no effect on heating.
+- **Minimum / maximum temperature** that can be set on the thermostat.
+
+</td>
+<td valign="top">
+<img src="https://raw.githubusercontent.com/HerrBausW/ha-climate-entity-builder/main/images/add-thermostat-2.png" alt="Add thermostat: humidity sensor with offset, minimum and maximum temperature">
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+**Hysteresis & switch cycling** (collapsed by default)
+
+Setpoint step size, cold/hot tolerance and an optional minimum switch cycle
+duration — see [Hysteresis](#hysteresis).
+
+**Window pause**
+
+Window/door sensors, an optional open delay and the window-open
+temperature — see [Window contacts](#window-contacts).
+
+</td>
+<td valign="top">
+<img src="https://raw.githubusercontent.com/HerrBausW/ha-climate-entity-builder/main/images/add-thermostat-3.png" alt="Add thermostat: hysteresis group (collapsed) and window pause group">
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+**Presets & schedule**
+
+An optional schedule for `auto` mode, plus the comfort and eco
+temperature. The schedule decides which of the two applies in `auto`; both
+are also available as presets in `heat` mode — see [Modes](#modes).
+
+</td>
+<td valign="top">
+<img src="https://raw.githubusercontent.com/HerrBausW/ha-climate-entity-builder/main/images/add-thermostat-4.png" alt="Add thermostat: schedule, comfort and eco temperature">
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+**Failsafe**
+
+How long an invalid temperature reading is tolerated before the heater is
+forced off, and the plausibility bounds a reading must stay within — see
+[Failsafe](#failsafe).
+
+</td>
+<td valign="top">
+<img src="https://raw.githubusercontent.com/HerrBausW/ha-climate-entity-builder/main/images/add-thermostat-5.png" alt="Add thermostat: failsafe delay and plausibility bounds">
+</td>
+</tr>
+</table>
 
 ## Modes
 
