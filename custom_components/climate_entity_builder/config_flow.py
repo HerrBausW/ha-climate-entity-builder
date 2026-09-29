@@ -38,6 +38,7 @@ from .const import (
     CONF_MIN_CYCLE_DURATION,
     CONF_MIN_TEMP,
     CONF_NAME,
+    CONF_PROFILE_TEMPERATURE,
     CONF_SCHEDULE,
     CONF_SENSOR_MAX_VALID,
     CONF_SENSOR_MIN_VALID,
@@ -52,11 +53,14 @@ from .const import (
     DEFAULT_HOT_TOLERANCE,
     DEFAULT_MAX_TEMP,
     DEFAULT_MIN_TEMP,
+    DEFAULT_PROFILE_TEMPERATURE,
     DEFAULT_SENSOR_MAX_VALID_TEMP,
     DEFAULT_SENSOR_MIN_VALID_TEMP,
     DEFAULT_SENSOR_STALE_TIMEOUT_MINUTES,
     DEFAULT_TARGET_TEMP_STEP,
     DOMAIN,
+    RESERVED_PRESET_NAMES,
+    SUBENTRY_TYPE_PROFILE,
     SUBENTRY_TYPE_THERMOSTAT,
 )
 
@@ -192,6 +196,24 @@ def _thermostat_data_schema(defaults: Mapping[str, Any]) -> vol.Schema:
     )
 
 
+def _duplicate_name_error(
+    name: str,
+    entry: ConfigEntry,
+    *,
+    subentry_type: str,
+    ignore_subentry_id: str | None,
+) -> str | None:
+    """Return "name_exists" if another subentry of the same type has this name."""
+    for subentry in entry.subentries.values():
+        if subentry.subentry_type != subentry_type:
+            continue
+        if subentry.subentry_id == ignore_subentry_id:
+            continue
+        if subentry.data.get(CONF_NAME, "").casefold() == name.casefold():
+            return "name_exists"
+    return None
+
+
 def _validate(
     user_input: dict[str, Any], entry: ConfigEntry, *, ignore_subentry_id: str | None
 ) -> dict[str, str]:
@@ -202,12 +224,14 @@ def _validate(
     if not name:
         errors[CONF_NAME] = "name_required"
     else:
-        for subentry in entry.subentries.values():
-            if subentry.subentry_id == ignore_subentry_id:
-                continue
-            if subentry.data.get(CONF_NAME, "").casefold() == name.casefold():
-                errors[CONF_NAME] = "name_exists"
-                break
+        error = _duplicate_name_error(
+            name,
+            entry,
+            subentry_type=SUBENTRY_TYPE_THERMOSTAT,
+            ignore_subentry_id=ignore_subentry_id,
+        )
+        if error:
+            errors[CONF_NAME] = error
 
     if user_input[CONF_MIN_TEMP] >= user_input[CONF_MAX_TEMP]:
         errors[CONF_MAX_TEMP] = "min_max_invalid"
@@ -220,22 +244,75 @@ def _validate(
     return errors
 
 
+def _validate_profile(
+    user_input: dict[str, Any], entry: ConfigEntry, *, ignore_subentry_id: str | None
+) -> dict[str, str]:
+    """Return a dict of field -> error code, empty if valid."""
+
+    errors: dict[str, str] = {}
+    name = user_input[CONF_NAME].strip()
+    if not name:
+        errors[CONF_NAME] = "name_required"
+    elif name.casefold() in RESERVED_PRESET_NAMES:
+        errors[CONF_NAME] = "name_reserved"
+    else:
+        error = _duplicate_name_error(
+            name,
+            entry,
+            subentry_type=SUBENTRY_TYPE_PROFILE,
+            ignore_subentry_id=ignore_subentry_id,
+        )
+        if error:
+            errors[CONF_NAME] = error
+
+    return errors
+
+
+def _profile_data_schema(defaults: Mapping[str, Any]) -> vol.Schema:
+    """Build the profile (sub)entry schema, pre-filled if reconfiguring."""
+
+    def d(key: str, fallback: Any) -> Any:
+        return defaults.get(key, fallback)
+
+    return vol.Schema(
+        {
+            vol.Required(CONF_NAME, default=d(CONF_NAME, "")): cv.string,
+            vol.Required(
+                CONF_PROFILE_TEMPERATURE,
+                default=d(CONF_PROFILE_TEMPERATURE, DEFAULT_PROFILE_TEMPERATURE),
+            ): NumberSelector(
+                NumberSelectorConfig(
+                    min=-20, max=50, step=0.5, mode=NumberSelectorMode.BOX, unit_of_measurement="°C"
+                )
+            ),
+        }
+    )
+
+
 class RoomThermostatConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Handle the (single-instance) Climate Entity Builder hub config flow."""
+    """Handle the Climate Entity Builder hub config flow.
+
+    Multiple hubs are allowed on purpose: each hub owns its own independent
+    set of profile subentries, so e.g. a "Ground floor" hub and an "Upper
+    floor" hub can offer different custom presets to the thermostats
+    created under each of them.
+    """
 
     VERSION = 1
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Create the single hub entry; thermostats are added as subentries."""
-        if self._async_current_entries():
-            return self.async_abort(reason="single_instance_allowed")
-
+        """Create a hub entry; thermostats/profiles are added as subentries."""
         if user_input is not None:
-            return self.async_create_entry(title="Climate Entity Builder", data={})
+            name = user_input[CONF_NAME].strip() or "Climate Entity Builder"
+            return self.async_create_entry(title=name, data={})
 
-        return self.async_show_form(step_id="user")
+        default_name = "Climate Entity Builder" if not self._async_current_entries() else ""
+        return self.async_show_form(
+            step_id="user",
+            data_schema=vol.Schema({vol.Required(CONF_NAME, default=default_name): cv.string}),
+        )
 
     @classmethod
     @callback
@@ -243,7 +320,10 @@ class RoomThermostatConfigFlow(ConfigFlow, domain=DOMAIN):
         cls, config_entry: ConfigEntry
     ) -> dict[str, type[ConfigSubentryFlow]]:
         """Return subentries supported by this integration."""
-        return {SUBENTRY_TYPE_THERMOSTAT: ThermostatSubentryFlowHandler}
+        return {
+            SUBENTRY_TYPE_THERMOSTAT: ThermostatSubentryFlowHandler,
+            SUBENTRY_TYPE_PROFILE: ProfileSubentryFlowHandler,
+        }
 
 
 class ThermostatSubentryFlowHandler(ConfigSubentryFlow):
@@ -291,6 +371,57 @@ class ThermostatSubentryFlowHandler(ConfigSubentryFlow):
 
         defaults = dict(existing.data) if existing else dict(user_input or {})
         schema = _thermostat_data_schema(defaults)
+        return self.async_show_form(
+            step_id="reconfigure" if reconfigure else "user",
+            data_schema=schema,
+            errors=errors,
+        )
+
+
+class ProfileSubentryFlowHandler(ConfigSubentryFlow):
+    """Add or reconfigure a custom preset profile (name + temperature).
+
+    Every profile under a hub is offered as an extra selectable preset (in
+    heat mode) on every thermostat under that same hub - a room simply can't
+    see another hub's profiles, since each subentry only ever belongs to
+    one parent hub.
+    """
+
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """Add a new profile."""
+        return await self._async_step(user_input)
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """Reconfigure an existing profile."""
+        return await self._async_step(user_input)
+
+    async def _async_step(
+        self, user_input: dict[str, Any] | None
+    ) -> SubentryFlowResult:
+        reconfigure = self.source == SOURCE_RECONFIGURE
+        existing = self._get_reconfigure_subentry() if reconfigure else None
+        entry = self._get_entry()
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            errors = _validate_profile(
+                user_input,
+                entry,
+                ignore_subentry_id=existing.subentry_id if existing else None,
+            )
+            if not errors:
+                name = user_input[CONF_NAME].strip()
+                data = {**user_input, CONF_NAME: name}
+                if existing is not None:
+                    return self.async_update_and_abort(entry, existing, data=data, title=name)
+                return self.async_create_entry(title=name, data=data)
+
+        defaults = dict(existing.data) if existing else dict(user_input or {})
+        schema = _profile_data_schema(defaults)
         return self.async_show_form(
             step_id="reconfigure" if reconfigure else "user",
             data_schema=schema,

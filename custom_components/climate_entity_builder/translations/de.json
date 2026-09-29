@@ -3,11 +3,11 @@
     "step": {
       "user": {
         "title": "Climate Entity Builder einrichten",
-        "description": "Hiermit wird der Room-Thermostat-Hub angelegt. Über \"Thermostat hinzufügen\" auf der Geräteseite der Integration richtest du anschließend pro Raum ein virtuelles Thermostat ein."
+        "description": "Legt einen Climate-Entity-Builder-Hub an. Du kannst mehrere anlegen, z.B. einen pro Etage - jeder Hub hat seine eigenen, unabhängigen Profile, die nur den Thermostaten unter diesem Hub zur Verfügung stehen. Danach über \"Thermostat hinzufügen\" und \"Profil hinzufügen\" auf der Geräteseite des Hubs weiter einrichten.",
+        "data": {
+          "name": "Hub-Name"
+        }
       }
-    },
-    "abort": {
-      "single_instance_allowed": "Climate Entity Builder ist bereits eingerichtet. Weitere Thermostate über \"Thermostat hinzufügen\" auf der Geräteseite der Integration anlegen."
     }
   },
   "config_subentries": {
@@ -84,6 +84,36 @@
       },
       "abort": {
         "reconfigure_successful": "Das Thermostat wurde erfolgreich aktualisiert."
+      }
+    },
+    "profile": {
+      "title": "Profil",
+      "entry_type": "Profil",
+      "initiate_flow": {
+        "user": "Profil hinzufügen"
+      },
+      "step": {
+        "user": {
+          "title": "Profil hinzufügen",
+          "description": "Definiere eine eigene Voreinstellung, die auf jedem Thermostat unter diesem Hub im Heizen-Modus zur Auswahl steht.",
+          "data": {
+            "name": "Name",
+            "temperature": "Temperatur"
+          }
+        },
+        "reconfigure": {
+          "title": "Profil bearbeiten",
+          "description": "Dieses Profil aktualisieren.",
+          "data": {
+            "name": "Name",
+            "temperature": "Temperatur"
+          }
+        }
+      },
+      "error": {
+        "name_required": "Bitte einen Namen eingeben.",
+        "name_exists": "Ein Profil mit diesem Namen existiert bereits.",
+        "name_reserved": "Dieser Name ist für eine eingebaute Voreinstellung reserviert."
       }
     }
   },

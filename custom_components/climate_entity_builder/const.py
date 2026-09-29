@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from homeassistant.components.climate import PRESET_COMFORT, PRESET_ECO
+from homeassistant.components.climate import PRESET_COMFORT, PRESET_ECO, PRESET_NONE
 
 DOMAIN = "climate_entity_builder"
 
 SUBENTRY_TYPE_THERMOSTAT = "thermostat"
+SUBENTRY_TYPE_PROFILE = "profile"
 
 # --- Config / subentry data keys -------------------------------------------------
 
@@ -28,6 +29,7 @@ CONF_SENSOR_MIN_VALID = "sensor_min_valid_temp"
 CONF_SENSOR_MAX_VALID = "sensor_max_valid_temp"
 CONF_WINDOW_SENSORS = "window_sensors"
 CONF_WINDOW_OPEN_DELAY = "window_open_delay"
+CONF_PROFILE_TEMPERATURE = "temperature"
 
 # --- Defaults ----------------------------------------------------------------
 
@@ -41,6 +43,7 @@ DEFAULT_ECO_TEMP = 18.0
 DEFAULT_SENSOR_STALE_TIMEOUT_MINUTES = 15
 DEFAULT_SENSOR_MIN_VALID_TEMP = 5.0
 DEFAULT_SENSOR_MAX_VALID_TEMP = 40.0
+DEFAULT_PROFILE_TEMPERATURE = DEFAULT_COMFORT_TEMP
 
 # --- Presets -------------------------------------------------------------------
 # Presets are only ever offered while hvac_mode == HEAT. In AUTO mode the
@@ -55,6 +58,13 @@ PRESET_ECO_MODE = PRESET_ECO
 # forcing hvac_action to "off", so the thermostat keeps regulating against
 # the eco/setback temperature rather than going fully inert.
 PRESET_WINDOW_OPEN = "window_open"
+
+# A custom profile's name is used directly as its preset_mode value (no
+# fixed translation possible for user-entered text), so it must not collide
+# with one of the built-in identifiers above.
+RESERVED_PRESET_NAMES = frozenset(
+    {PRESET_NONE, PRESET_COMFORT_MODE, PRESET_ECO_MODE, PRESET_WINDOW_OPEN}
+)
 
 # --- Runtime state / attributes -------------------------------------------------
 

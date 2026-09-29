@@ -3,11 +3,11 @@
     "step": {
       "user": {
         "title": "Set up Climate Entity Builder",
-        "description": "This creates the Climate Entity Builder hub. Afterwards, use \"Add thermostat\" on the integration's device page to configure one virtual thermostat per room."
+        "description": "Creates a Climate Entity Builder hub. You can set up more than one, e.g. one per floor - each hub has its own independent set of custom preset profiles, offered only to the thermostats added under that hub. Afterwards, use \"Add thermostat\" and \"Add profile\" on the hub's device page.",
+        "data": {
+          "name": "Hub name"
+        }
       }
-    },
-    "abort": {
-      "single_instance_allowed": "Climate Entity Builder is already set up. Add more thermostats via \"Add thermostat\" on the integration's device page."
     }
   },
   "config_subentries": {
@@ -84,6 +84,36 @@
       },
       "abort": {
         "reconfigure_successful": "The thermostat was updated successfully."
+      }
+    },
+    "profile": {
+      "title": "Profile",
+      "entry_type": "Profile",
+      "initiate_flow": {
+        "user": "Add profile"
+      },
+      "step": {
+        "user": {
+          "title": "Add profile",
+          "description": "Define a custom preset, offered on every thermostat under this hub while in heat mode.",
+          "data": {
+            "name": "Name",
+            "temperature": "Temperature"
+          }
+        },
+        "reconfigure": {
+          "title": "Edit profile",
+          "description": "Update this profile.",
+          "data": {
+            "name": "Name",
+            "temperature": "Temperature"
+          }
+        }
+      },
+      "error": {
+        "name_required": "Please enter a name.",
+        "name_exists": "A profile with this name already exists.",
+        "name_reserved": "This name is reserved for a built-in preset."
       }
     }
   },

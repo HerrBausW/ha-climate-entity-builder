@@ -22,6 +22,7 @@
 - [Hysteresis](#hysteresis)
 - [Failsafe](#failsafe)
 - [Window contacts](#window-contacts)
+- [Custom preset profiles](#custom-preset-profiles)
 - [Companion sensors](#companion-sensors)
 - [Known limitations](#known-limitations)
 - [Example configuration](#example-configuration)
@@ -41,12 +42,15 @@ companion sensors, so it fits right into an existing maintenance dashboard.
 
 ## Features
 
-- One **Climate Entity Builder** hub, one **sub-entry per room** — each room
-  gets its own device in the Device Registry, named exactly what you type.
+- One or more **Climate Entity Builder** hubs, each with one **sub-entry per
+  room** — every room gets its own device in the Device Registry, named
+  exactly what you type. Multiple hubs are useful for giving different
+  floors/areas their own independent set of custom preset profiles.
 - `off` / `heat` / `auto` HVAC modes, with configurable hysteresis in `heat`
   and a schedule-driven setpoint in `auto`.
 - Optional humidity sensor, shown as `current_humidity` on the same entity.
-- Optional `comfort`/`eco` presets while in `heat` mode (hidden in `auto`,
+- `comfort`/`eco` presets plus any number of your own **custom preset
+  profiles** (name + temperature) while in `heat` mode (hidden in `auto`,
   where the schedule is the single source of truth for the setpoint).
 - Sensor failsafe with a configurable grace period and plausibility bounds —
   a brief glitch never cuts the heat, a genuinely dead sensor does.
@@ -83,9 +87,11 @@ introduced in HA 2025.7).
 
 ## Setup
 
-1. Settings → Devices & Services → Add Integration → **Climate Entity Builder**.
-   This creates the hub (only one is needed/allowed).
-2. On the integration's page, click **Add thermostat** and fill in the form:
+1. Settings → Devices & Services → Add Integration → **Climate Entity
+   Builder**. Give the hub a name — one hub is enough for most setups, but
+   you can add more (e.g. one per floor) if you want separate sets of
+   custom preset profiles (see [below](#custom-preset-profiles)).
+2. On the hub's page, click **Add thermostat** and fill in the form:
 
    <p align="center">
      <img src="https://raw.githubusercontent.com/HerrBausW/ha-climate-entity-builder/main/images/add-thermostat-1.png" width="31%" alt="Add thermostat: name, temperature sensor, heater, humidity sensor, schedule">
@@ -164,6 +170,20 @@ While paused, the **Voreinstellung**/preset chip on the climate card shows
 setpoint and preset underneath are untouched and reassert themselves the
 moment the window closes — nothing to reset manually.
 
+## Custom preset profiles
+
+Beyond the built-in `comfort`/`eco` presets, click **Add profile** on a
+hub's device page to define your own — a name and a temperature (e.g.
+`Boost: 23°C`, `Vacation: 15°C`). Every profile is offered as an extra
+preset, identically, on **every thermostat under that same hub** — there's
+no per-room override. If you want different profiles for different areas
+(e.g. a floor with its own vacation temperature), set up a separate hub for
+that area instead; a thermostat only ever sees the profiles of its own
+hub. Profiles are only offered in `heat` mode, same as `comfort`/`eco`.
+
+A profile's name can't reuse one of the built-in preset identifiers
+(`none`, `comfort`, `eco`, `window_open` — case-insensitive).
+
 ## Companion sensors
 
 Every thermostat device carries read-only `binary_sensor` entities alongside
@@ -237,10 +257,10 @@ and pull request.
 
 ## Roadmap
 
-Not in the MVP, but the architecture leaves room for: presence & vacation
-modes, a timed boost preset, multiple heater actuators per room, cooling,
-external temperature limiting, valve run-on, per-time-slot schedules with
-weekdays, and dedicated diagnostic/statistics entities.
+Not in the MVP, but the architecture leaves room for: a *timed* boost
+preset (auto-reverting after a duration), multiple heater actuators per
+room, cooling, external temperature limiting, valve run-on, per-time-slot
+schedules with weekdays, and dedicated diagnostic/statistics entities.
 
 ## License
 

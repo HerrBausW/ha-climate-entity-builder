@@ -54,6 +54,7 @@ from .const import (
     CONF_MIN_CYCLE_DURATION,
     CONF_MIN_TEMP,
     CONF_NAME,
+    CONF_PROFILE_TEMPERATURE,
     CONF_SCHEDULE,
     CONF_SENSOR_MAX_VALID,
     CONF_SENSOR_MIN_VALID,
@@ -67,6 +68,7 @@ from .const import (
     DOMAIN,
     MANUFACTURER,
     PRESET_WINDOW_OPEN,
+    SUBENTRY_TYPE_PROFILE,
     SUBENTRY_TYPE_THERMOSTAT,
     failsafe_signal,
     window_open_signal,
@@ -77,17 +79,35 @@ _LOGGER = logging.getLogger(__name__)
 HA_DOMAIN = "homeassistant"
 
 
+def _hub_profiles(entry: ConfigEntry) -> list[dict[str, Any]]:
+    """Return this hub's profile subentries as plain {name, temperature} dicts.
+
+    A thermostat only ever sees the profiles of its own parent hub - each
+    subentry belongs to exactly one config entry, so there's no way for a
+    room under one hub to pick up another hub's profiles.
+    """
+    return [
+        {
+            "name": subentry.data[CONF_NAME],
+            "temperature": subentry.data[CONF_PROFILE_TEMPERATURE],
+        }
+        for subentry in entry.subentries.values()
+        if subentry.subentry_type == SUBENTRY_TYPE_PROFILE
+    ]
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up one climate entity per thermostat subentry."""
+    profiles = _hub_profiles(entry)
     for subentry_id, subentry in entry.subentries.items():
         if subentry.subentry_type != SUBENTRY_TYPE_THERMOSTAT:
             continue
         async_add_entities(
-            [RoomThermostatClimate(subentry)], config_subentry_id=subentry_id
+            [RoomThermostatClimate(subentry, profiles)], config_subentry_id=subentry_id
         )
 
 
@@ -111,8 +131,12 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
         | ClimateEntityFeature.TURN_OFF
     )
 
-    def __init__(self, subentry: ConfigSubentry) -> None:
+    def __init__(self, subentry: ConfigSubentry, profiles: list[dict[str, Any]]) -> None:
         data = subentry.data
+        # A profile's name doubles as its preset_mode value, so it's an
+        # error to shadow a built-in one - already rejected at config time,
+        # this is just the runtime side of that same guarantee.
+        self._profiles = profiles
         name = data[CONF_NAME]
         self._subentry_id = subentry.subentry_id
 
@@ -180,7 +204,10 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
                 except (TypeError, ValueError):
                     pass
             preset = last_state.attributes.get("preset_mode")
-            if preset in (PRESET_COMFORT, PRESET_ECO):
+            # A restored profile name that no longer exists (renamed/removed
+            # while HA was stopped) is simply not restored, falling back to
+            # PRESET_NONE instead of a dangling reference.
+            if preset in (PRESET_COMFORT, PRESET_ECO) or preset in self._profile_names():
                 self._attr_preset_mode = preset
 
         self._handle_temperature_state(self.hass.states.get(self._temp_sensor_entity_id))
@@ -247,6 +274,15 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
     def _window_pause_active(self) -> bool:
         return self._window_open and self._attr_hvac_mode != HVACMode.OFF
 
+    def _profile_names(self) -> list[str]:
+        return [profile["name"] for profile in self._profiles]
+
+    def _profile_temperature(self, name: str) -> float | None:
+        for profile in self._profiles:
+            if profile["name"] == name:
+                return profile["temperature"]
+        return None
+
     @property
     def preset_mode(self) -> str:
         # Only ever returned while a configured window/door sensor is
@@ -260,7 +296,7 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
     @property
     def preset_modes(self) -> list[str]:
         if self._attr_hvac_mode == HVACMode.HEAT:
-            modes = [PRESET_NONE, PRESET_COMFORT, PRESET_ECO]
+            modes = [PRESET_NONE, PRESET_COMFORT, PRESET_ECO, *self._profile_names()]
         else:
             modes = [PRESET_NONE]
         if self._window_pause_active:
@@ -341,6 +377,10 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
             self._attr_target_temperature = self._comfort_temp
         elif preset_mode == PRESET_ECO:
             self._attr_target_temperature = self._eco_temp
+        else:
+            profile_temperature = self._profile_temperature(preset_mode)
+            if profile_temperature is not None:
+                self._attr_target_temperature = profile_temperature
         await self._async_control_heating()
         self.async_write_ha_state()
 

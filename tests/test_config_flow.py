@@ -25,23 +25,30 @@ def _marker_default(schema, key: str):
     return marker.default()
 
 
-async def test_hub_config_flow_creates_single_entry(hass) -> None:
-    """The hub config flow (item 1) creates exactly one entry."""
+async def test_hub_config_flow_creates_entry(hass) -> None:
+    """The hub config flow (item 1) creates an entry, defaulting its name."""
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": SOURCE_USER}
     )
     assert result["type"] is FlowResultType.FORM
 
-    result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_NAME: "Climate Entity Builder"}
+    )
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == "Climate Entity Builder"
 
-    # A second attempt aborts: only a single hub instance is supported.
+    # A second, independently-named hub is allowed (see test_profiles.py for
+    # the multi-hub / per-hub-profiles coverage).
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": SOURCE_USER}
     )
-    assert result["type"] is FlowResultType.ABORT
-    assert result["reason"] == "single_instance_allowed"
+    assert result["type"] is FlowResultType.FORM
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_NAME: "Zweiter Hub"}
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["title"] == "Zweiter Hub"
 
 
 async def test_add_thermostat_subentry_success(hass) -> None:
