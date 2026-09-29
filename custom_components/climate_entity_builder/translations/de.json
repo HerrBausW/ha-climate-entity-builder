@@ -6,6 +6,9 @@
         "description": "Legt einen Climate-Entity-Builder-Hub an. Du kannst mehrere anlegen, z.B. einen pro Etage - jeder Hub hat seine eigenen, unabhängigen Profile, die nur den Thermostaten unter diesem Hub zur Verfügung stehen. Danach über \"Thermostat hinzufügen\" und \"Profil hinzufügen\" auf der Geräteseite des Hubs weiter einrichten.",
         "data": {
           "name": "Hub-Name"
+        },
+        "data_description": {
+          "name": "Dient nur dazu, mehrere Hubs auf der Integrationsseite zu unterscheiden."
         }
       }
     }
@@ -36,10 +39,15 @@
             "sensor_max_valid_temp": "Obere Plausibilitätsgrenze"
           },
           "data_description": {
+            "name": "Name des Thermostats. Er wird zum Gerätenamen und zur Entity-ID, z.B. ergibt „Schlafzimmer“ climate.schlafzimmer.",
             "area_id": "Weist dem Gerät jetzt einmalig diesen Bereich zu. Eine spätere Änderung hier hat keine Wirkung mehr, sobald du das Gerät zwischenzeitlich manuell auf seiner eigenen Seite neu zugewiesen hast - diese manuelle Wahl hat immer Vorrang.",
+            "temperature_sensor": "Der Sensor, der die Raumtemperatur misst (Geräteklasse Temperatur).",
             "temperature_offset": "Wird auf jede Messung des Temperatursensors addiert, bevor sie angezeigt und zum Regeln verwendet wird, z.B. -0,5 wenn der Sensor ein halbes Grad zu warm misst. Die Failsafe-Plausibilitätsgrenzen unten beurteilen weiterhin den Rohwert.",
-            "humidity_offset": "Wird auf jede Messung des Luftfeuchtigkeitssensors addiert, bevor sie angezeigt wird, z.B. -5 wenn er 5 % zu hoch misst. Das Ergebnis bleibt im Bereich 0-100 %.",
             "heater": "Wird über die generischen Dienste homeassistant.turn_on/turn_off geschaltet.",
+            "humidity_sensor": "Optional. Sein Wert wird als Luftfeuchtigkeit am Thermostat angezeigt; er beeinflusst das Heizen nicht.",
+            "humidity_offset": "Wird auf jede Messung des Luftfeuchtigkeitssensors addiert, bevor sie angezeigt wird, z.B. -5 wenn er 5 % zu hoch misst. Das Ergebnis bleibt im Bereich 0-100 %.",
+            "min_temp": "Niedrigste Solltemperatur, die an diesem Thermostat eingestellt werden kann.",
+            "max_temp": "Höchste Solltemperatur, die an diesem Thermostat eingestellt werden kann.",
             "sensor_stale_timeout": "Wie lange ein unavailable/unknown/unplausibler Wert toleriert wird, bevor der Ausgang zwangsweise geschlossen wird.",
             "sensor_min_valid_temp": "Werte unterhalb dieser Grenze gelten als unplausibel.",
             "sensor_max_valid_temp": "Werte oberhalb dieser Grenze gelten als unplausibel."
@@ -54,6 +62,9 @@
                 "min_cycle_duration": "Minimale Schaltzeit (optional)"
               },
               "data_description": {
+                "target_temp_step": "Schrittweite der Solltemperatur-Tasten auf der Thermostat-Karte.",
+                "cold_tolerance": "Die Heizung schaltet ein, sobald der Raum so viele Grad unter dem Sollwert liegt.",
+                "hot_tolerance": "Die Heizung schaltet aus, sobald der Raum so viele Grad über dem Sollwert liegt. Dazwischen bleibt die Heizung wie sie ist.",
                 "min_cycle_duration": "Verhindert zu häufiges Takten des Heizungsausgangs."
               }
             },
@@ -78,7 +89,9 @@
                 "eco_temperature": "Absenktemperatur (Zeitplan inaktiv)"
               },
               "data_description": {
-                "schedule_entity": "Eine schedule.*-Entity. Ist sie aktiv, gilt die Komforttemperatur, sonst die Absenktemperatur."
+                "schedule_entity": "Eine schedule.*-Entity. Ist sie aktiv, gilt die Komforttemperatur, sonst die Absenktemperatur.",
+                "comfort_temperature": "Solltemperatur im Auto-Modus, solange der Zeitplan aktiv ist, und wenn die Voreinstellung „Komfort“ gewählt wird.",
+                "eco_temperature": "Solltemperatur im Auto-Modus, solange der Zeitplan inaktiv ist, und wenn die Voreinstellung „Eco“ gewählt wird."
               }
             }
           }
@@ -101,10 +114,15 @@
             "sensor_max_valid_temp": "Obere Plausibilitätsgrenze"
           },
           "data_description": {
+            "name": "Name des Thermostats. Er wird zum Gerätenamen und zur Entity-ID, z.B. ergibt „Schlafzimmer“ climate.schlafzimmer.",
             "area_id": "Wirkt nur, solange das Gerät noch keinen Bereich hat (z.B. nie gesetzt, oder das Thermostat ist älter als dieses Feld). Ist einmal ein Bereich gesetzt - hierüber oder manuell - hat eine Änderung hier keine Wirkung mehr; nutze dafür die eigene Seite des Geräts.",
+            "temperature_sensor": "Der Sensor, der die Raumtemperatur misst (Geräteklasse Temperatur).",
             "temperature_offset": "Wird auf jede Messung des Temperatursensors addiert, bevor sie angezeigt und zum Regeln verwendet wird, z.B. -0,5 wenn der Sensor ein halbes Grad zu warm misst. Die Failsafe-Plausibilitätsgrenzen unten beurteilen weiterhin den Rohwert.",
-            "humidity_offset": "Wird auf jede Messung des Luftfeuchtigkeitssensors addiert, bevor sie angezeigt wird, z.B. -5 wenn er 5 % zu hoch misst. Das Ergebnis bleibt im Bereich 0-100 %.",
             "heater": "Wird über die generischen Dienste homeassistant.turn_on/turn_off geschaltet.",
+            "humidity_sensor": "Optional. Sein Wert wird als Luftfeuchtigkeit am Thermostat angezeigt; er beeinflusst das Heizen nicht.",
+            "humidity_offset": "Wird auf jede Messung des Luftfeuchtigkeitssensors addiert, bevor sie angezeigt wird, z.B. -5 wenn er 5 % zu hoch misst. Das Ergebnis bleibt im Bereich 0-100 %.",
+            "min_temp": "Niedrigste Solltemperatur, die an diesem Thermostat eingestellt werden kann.",
+            "max_temp": "Höchste Solltemperatur, die an diesem Thermostat eingestellt werden kann.",
             "sensor_stale_timeout": "Wie lange ein unavailable/unknown/unplausibler Wert toleriert wird, bevor der Ausgang zwangsweise geschlossen wird.",
             "sensor_min_valid_temp": "Werte unterhalb dieser Grenze gelten als unplausibel.",
             "sensor_max_valid_temp": "Werte oberhalb dieser Grenze gelten als unplausibel."
@@ -119,6 +137,9 @@
                 "min_cycle_duration": "Minimale Schaltzeit (optional)"
               },
               "data_description": {
+                "target_temp_step": "Schrittweite der Solltemperatur-Tasten auf der Thermostat-Karte.",
+                "cold_tolerance": "Die Heizung schaltet ein, sobald der Raum so viele Grad unter dem Sollwert liegt.",
+                "hot_tolerance": "Die Heizung schaltet aus, sobald der Raum so viele Grad über dem Sollwert liegt. Dazwischen bleibt die Heizung wie sie ist.",
                 "min_cycle_duration": "Verhindert zu häufiges Takten des Heizungsausgangs."
               }
             },
@@ -143,7 +164,9 @@
                 "eco_temperature": "Absenktemperatur (Zeitplan inaktiv)"
               },
               "data_description": {
-                "schedule_entity": "Eine schedule.*-Entity. Ist sie aktiv, gilt die Komforttemperatur, sonst die Absenktemperatur."
+                "schedule_entity": "Eine schedule.*-Entity. Ist sie aktiv, gilt die Komforttemperatur, sonst die Absenktemperatur.",
+                "comfort_temperature": "Solltemperatur im Auto-Modus, solange der Zeitplan aktiv ist, und wenn die Voreinstellung „Komfort“ gewählt wird.",
+                "eco_temperature": "Solltemperatur im Auto-Modus, solange der Zeitplan inaktiv ist, und wenn die Voreinstellung „Eco“ gewählt wird."
               }
             }
           }

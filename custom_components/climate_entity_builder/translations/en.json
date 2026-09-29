@@ -6,6 +6,9 @@
         "description": "Creates a Climate Entity Builder hub. You can set up more than one, e.g. one per floor - each hub has its own independent set of custom preset profiles, offered only to the thermostats added under that hub. Afterwards, use \"Add thermostat\" and \"Add profile\" on the hub's device page.",
         "data": {
           "name": "Hub name"
+        },
+        "data_description": {
+          "name": "Only used to tell hubs apart on the integrations page."
         }
       }
     }
@@ -36,10 +39,15 @@
             "sensor_max_valid_temp": "Plausibility upper bound"
           },
           "data_description": {
+            "name": "Name of the thermostat. It becomes the device name and the entity id, e.g. \"Bedroom\" gives climate.bedroom.",
             "area_id": "Assigns the device to this area once, right now. Changing it later here has no effect if you've since reassigned the device manually on its own page - that manual choice always wins.",
+            "temperature_sensor": "The sensor that measures the room temperature (device class temperature).",
             "temperature_offset": "Added to every reading of the temperature sensor before it is shown and used for control, e.g. -0.5 if the sensor reads half a degree too warm. The failsafe plausibility bounds below still judge the raw reading.",
-            "humidity_offset": "Added to every reading of the humidity sensor before it is shown, e.g. -5 if it reads 5 % too high. The result is kept within 0-100 %.",
             "heater": "Turned on/off via the generic homeassistant.turn_on/turn_off services.",
+            "humidity_sensor": "Optional. Its value is shown as the humidity on the thermostat; it has no effect on heating.",
+            "humidity_offset": "Added to every reading of the humidity sensor before it is shown, e.g. -5 if it reads 5 % too high. The result is kept within 0-100 %.",
+            "min_temp": "Lowest target temperature that can be set on this thermostat.",
+            "max_temp": "Highest target temperature that can be set on this thermostat.",
             "sensor_stale_timeout": "How long an unavailable/unknown/implausible reading is tolerated before the heater is forced off.",
             "sensor_min_valid_temp": "Readings below this value are treated as implausible.",
             "sensor_max_valid_temp": "Readings above this value are treated as implausible."
@@ -54,6 +62,9 @@
                 "min_cycle_duration": "Minimum switch cycle duration (optional)"
               },
               "data_description": {
+                "target_temp_step": "Step size of the target temperature buttons on the thermostat card.",
+                "cold_tolerance": "The heater switches on once the room is this many degrees below the target.",
+                "hot_tolerance": "The heater switches off once the room is this many degrees above the target. In between, the heater stays as it is.",
                 "min_cycle_duration": "Prevents short-cycling the heater output."
               }
             },
@@ -78,7 +89,9 @@
                 "eco_temperature": "Eco/setback temperature (schedule off)"
               },
               "data_description": {
-                "schedule_entity": "A schedule.* entity. When active, the comfort temperature is used; otherwise the eco temperature."
+                "schedule_entity": "A schedule.* entity. When active, the comfort temperature is used; otherwise the eco temperature.",
+                "comfort_temperature": "Target temperature in auto mode while the schedule is on, and when the Comfort preset is selected.",
+                "eco_temperature": "Target temperature in auto mode while the schedule is off, and when the Eco preset is selected."
               }
             }
           }
@@ -101,10 +114,15 @@
             "sensor_max_valid_temp": "Plausibility upper bound"
           },
           "data_description": {
+            "name": "Name of the thermostat. It becomes the device name and the entity id, e.g. \"Bedroom\" gives climate.bedroom.",
             "area_id": "Only takes effect if the device doesn't already have an area (e.g. it was never set, or this thermostat predates this field). Once an area is set - by this or manually - changing it here has no further effect; use the device's own page instead.",
+            "temperature_sensor": "The sensor that measures the room temperature (device class temperature).",
             "temperature_offset": "Added to every reading of the temperature sensor before it is shown and used for control, e.g. -0.5 if the sensor reads half a degree too warm. The failsafe plausibility bounds below still judge the raw reading.",
-            "humidity_offset": "Added to every reading of the humidity sensor before it is shown, e.g. -5 if it reads 5 % too high. The result is kept within 0-100 %.",
             "heater": "Turned on/off via the generic homeassistant.turn_on/turn_off services.",
+            "humidity_sensor": "Optional. Its value is shown as the humidity on the thermostat; it has no effect on heating.",
+            "humidity_offset": "Added to every reading of the humidity sensor before it is shown, e.g. -5 if it reads 5 % too high. The result is kept within 0-100 %.",
+            "min_temp": "Lowest target temperature that can be set on this thermostat.",
+            "max_temp": "Highest target temperature that can be set on this thermostat.",
             "sensor_stale_timeout": "How long an unavailable/unknown/implausible reading is tolerated before the heater is forced off.",
             "sensor_min_valid_temp": "Readings below this value are treated as implausible.",
             "sensor_max_valid_temp": "Readings above this value are treated as implausible."
@@ -119,6 +137,9 @@
                 "min_cycle_duration": "Minimum switch cycle duration (optional)"
               },
               "data_description": {
+                "target_temp_step": "Step size of the target temperature buttons on the thermostat card.",
+                "cold_tolerance": "The heater switches on once the room is this many degrees below the target.",
+                "hot_tolerance": "The heater switches off once the room is this many degrees above the target. In between, the heater stays as it is.",
                 "min_cycle_duration": "Prevents short-cycling the heater output."
               }
             },
@@ -143,7 +164,9 @@
                 "eco_temperature": "Eco/setback temperature (schedule off)"
               },
               "data_description": {
-                "schedule_entity": "A schedule.* entity. When active, the comfort temperature is used; otherwise the eco temperature."
+                "schedule_entity": "A schedule.* entity. When active, the comfort temperature is used; otherwise the eco temperature.",
+                "comfort_temperature": "Target temperature in auto mode while the schedule is on, and when the Comfort preset is selected.",
+                "eco_temperature": "Target temperature in auto mode while the schedule is off, and when the Eco preset is selected."
               }
             }
           }
