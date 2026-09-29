@@ -14,7 +14,9 @@ SUBENTRY_TYPE_PROFILE = "profile"
 CONF_NAME = "name"
 CONF_AREA = "area_id"
 CONF_TEMP_SENSOR = "temperature_sensor"
+CONF_TEMP_OFFSET = "temperature_offset"
 CONF_HUMIDITY_SENSOR = "humidity_sensor"
+CONF_HUMIDITY_OFFSET = "humidity_offset"
 CONF_HEATER = "heater"
 CONF_MIN_TEMP = "min_temp"
 CONF_MAX_TEMP = "max_temp"
@@ -36,6 +38,8 @@ CONF_PROFILE_ICON = "icon"
 
 # --- Defaults ----------------------------------------------------------------
 
+DEFAULT_TEMP_OFFSET = 0.0
+DEFAULT_HUMIDITY_OFFSET = 0.0
 DEFAULT_MIN_TEMP = 5.0
 DEFAULT_MAX_TEMP = 30.5
 DEFAULT_TARGET_TEMP_STEP = 0.5

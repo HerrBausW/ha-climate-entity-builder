@@ -37,6 +37,7 @@ from .const import (
     CONF_ECO_TEMP,
     CONF_HEATER,
     CONF_HOT_TOLERANCE,
+    CONF_HUMIDITY_OFFSET,
     CONF_HUMIDITY_SENSOR,
     CONF_MAX_TEMP,
     CONF_MIN_CYCLE_DURATION,
@@ -49,6 +50,7 @@ from .const import (
     CONF_SENSOR_MIN_VALID,
     CONF_SENSOR_STALE_TIMEOUT,
     CONF_TARGET_TEMP_STEP,
+    CONF_TEMP_OFFSET,
     CONF_TEMP_SENSOR,
     CONF_WINDOW_OPEN_DELAY,
     CONF_WINDOW_OPEN_TEMPERATURE,
@@ -57,6 +59,7 @@ from .const import (
     DEFAULT_COMFORT_TEMP,
     DEFAULT_ECO_TEMP,
     DEFAULT_HOT_TOLERANCE,
+    DEFAULT_HUMIDITY_OFFSET,
     DEFAULT_MAX_TEMP,
     DEFAULT_MIN_TEMP,
     DEFAULT_PROFILE_TEMPERATURE,
@@ -64,6 +67,7 @@ from .const import (
     DEFAULT_SENSOR_MIN_VALID_TEMP,
     DEFAULT_SENSOR_STALE_TIMEOUT_MINUTES,
     DEFAULT_TARGET_TEMP_STEP,
+    DEFAULT_TEMP_OFFSET,
     DEFAULT_WINDOW_OPEN_TEMPERATURE,
     DOMAIN,
     RESERVED_PRESET_NAMES,
@@ -104,6 +108,13 @@ def _thermostat_data_schema(defaults: Mapping[str, Any]) -> vol.Schema:
             vol.Required(CONF_TEMP_SENSOR, default=d(CONF_TEMP_SENSOR, None)): EntitySelector(
                 EntitySelectorConfig(domain="sensor", device_class="temperature")
             ),
+            vol.Required(
+                CONF_TEMP_OFFSET, default=d(CONF_TEMP_OFFSET, DEFAULT_TEMP_OFFSET)
+            ): NumberSelector(
+                NumberSelectorConfig(
+                    min=-10, max=10, step=0.1, mode=NumberSelectorMode.BOX, unit_of_measurement="°C"
+                )
+            ),
             vol.Required(CONF_HEATER, default=d(CONF_HEATER, None)): EntitySelector(
                 EntitySelectorConfig(domain=HEATER_DOMAINS)
             ),
@@ -116,6 +127,13 @@ def _thermostat_data_schema(defaults: Mapping[str, Any]) -> vol.Schema:
             ): vol.Any(
                 None,
                 EntitySelector(EntitySelectorConfig(domain="sensor", device_class="humidity")),
+            ),
+            vol.Required(
+                CONF_HUMIDITY_OFFSET, default=d(CONF_HUMIDITY_OFFSET, DEFAULT_HUMIDITY_OFFSET)
+            ): NumberSelector(
+                NumberSelectorConfig(
+                    min=-30, max=30, step=1, mode=NumberSelectorMode.BOX, unit_of_measurement="%"
+                )
             ),
             vol.Required(
                 CONF_MIN_TEMP, default=d(CONF_MIN_TEMP, DEFAULT_MIN_TEMP)

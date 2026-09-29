@@ -103,9 +103,14 @@ introduced in HA 2025.7).
    - Area (optional) — assigned to the device once, right now; a later
      manual reassignment on the device's own page always takes precedence
      over changing this field again
-   - Temperature sensor (`device_class: temperature`)
+   - Temperature sensor (`device_class: temperature`), with an optional
+     **temperature offset** (default 0 °C) to correct a sensor that reads
+     too warm or too cold. The offset applies to what's shown and to
+     regulation; the failsafe plausibility bounds still judge the raw
+     reading, so an offset can never hide a dead sensor.
    - Heater output (a `switch.*` or `input_boolean.*`)
-   - Optional: humidity sensor, schedule, min/max temperature, step size,
+   - Optional: humidity sensor (with its own **humidity offset**, default
+     0 %, result kept within 0–100 %), schedule, min/max temperature, step size,
      cold/hot tolerance, minimum cycle duration, window/door sensors with
      an open delay and window-open temperature, comfort/eco temperature,
      failsafe delay and plausibility bounds.

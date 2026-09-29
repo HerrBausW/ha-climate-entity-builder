@@ -51,6 +51,7 @@ from .const import (
     CONF_ECO_TEMP,
     CONF_HEATER,
     CONF_HOT_TOLERANCE,
+    CONF_HUMIDITY_OFFSET,
     CONF_HUMIDITY_SENSOR,
     CONF_MAX_TEMP,
     CONF_MIN_CYCLE_DURATION,
@@ -63,12 +64,15 @@ from .const import (
     CONF_SENSOR_MIN_VALID,
     CONF_SENSOR_STALE_TIMEOUT,
     CONF_TARGET_TEMP_STEP,
+    CONF_TEMP_OFFSET,
     CONF_TEMP_SENSOR,
     CONF_WINDOW_OPEN_DELAY,
     CONF_WINDOW_OPEN_TEMPERATURE,
     CONF_WINDOW_SENSORS,
     DATA_FAILSAFE_STATES,
     DATA_WINDOW_OPEN_STATES,
+    DEFAULT_HUMIDITY_OFFSET,
+    DEFAULT_TEMP_OFFSET,
     DEFAULT_WINDOW_OPEN_TEMPERATURE,
     DOMAIN,
     MANUFACTURER,
@@ -166,6 +170,12 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
         self._humidity_sensor_entity_id: str | None = data.get(CONF_HUMIDITY_SENSOR)
         self._heater_entity_id: str = data[CONF_HEATER]
         self._schedule_entity_id: str | None = data.get(CONF_SCHEDULE)
+        # .get() with a fallback, not data[...]: thermostats created before
+        # the offsets existed don't have them in their stored data.
+        self._temp_offset: float = data.get(CONF_TEMP_OFFSET, DEFAULT_TEMP_OFFSET)
+        self._humidity_offset: float = data.get(
+            CONF_HUMIDITY_OFFSET, DEFAULT_HUMIDITY_OFFSET
+        )
 
         self._attr_min_temp: float = data[CONF_MIN_TEMP]
         self._attr_max_temp: float = data[CONF_MAX_TEMP]
@@ -458,9 +468,12 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
             async_dispatcher_send(self.hass, failsafe_signal(self._subentry_id))
 
     def _handle_temperature_state(self, state) -> None:
+        # Plausibility is judged on the raw reading (see
+        # _is_valid_temperature_state) so an offset can never mask a dead or
+        # misbehaving sensor; the offset only corrects a *valid* reading.
         value = self._is_valid_temperature_state(state)
         if value is not None:
-            self._current_temp = value
+            self._current_temp = round(value + self._temp_offset, 2)
             if not self._sensor_valid:
                 _LOGGER.info("%s: temperature sensor is valid again", self.entity_id)
             self._sensor_valid = True
@@ -481,9 +494,10 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
         if state is None or state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
             return
         try:
-            self._current_humidity = round(float(state.state))
+            corrected = round(float(state.state) + self._humidity_offset)
         except ValueError:
-            pass
+            return
+        self._current_humidity = max(0, min(100, corrected))
 
     def _schedule_failsafe_timer(self) -> None:
         if self._failsafe_unsub is not None or self._failsafe_active:

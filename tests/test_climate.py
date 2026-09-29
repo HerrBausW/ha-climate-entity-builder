@@ -23,6 +23,7 @@ from custom_components.climate_entity_builder.const import ATTR_FAILSAFE_ACTIVE,
 
 from .helpers import (
     HEATER,
+    HUMIDITY_SENSOR,
     SCHEDULE,
     TEMP_SENSOR,
     async_setup_base,
@@ -260,3 +261,60 @@ async def test_area_suggestion_does_not_override_manual_reassignment(hass) -> No
 
     device = _device_for(hass, subentry_id)
     assert device.area_id == manual.id
+
+
+async def test_temperature_offset_is_applied(hass) -> None:
+    """The offset corrects the reading shown on the entity."""
+    await async_setup_base(hass, temperature=20.0)
+    await _setup(hass, temperature_offset=-1.5)
+
+    state = hass.states.get(CLIMATE_ENTITY_ID)
+    assert state.attributes["current_temperature"] == 18.5
+
+
+async def test_temperature_offset_drives_the_control_decision(hass) -> None:
+    """Regulation uses the corrected reading, not the raw one."""
+    # Raw 20.0 is above a 19.0 target, but with -2.0 the room is really 18.0.
+    await async_setup_base(hass, temperature=20.0)
+    await _setup(hass, temperature_offset=-2.0)
+    await _set_hvac_mode(hass, HVACMode.HEAT)
+    await _set_temperature(hass, 19.0)
+    await hass.async_block_till_done()
+
+    assert hass.states.get(HEATER).state == "on"
+
+
+async def test_temperature_offset_never_masks_an_implausible_reading(hass) -> None:
+    """Plausibility is judged on the raw value: 41 stays invalid even with -5."""
+    await async_setup_base(hass, temperature=41.0)  # default upper bound is 40
+    await _setup(hass, temperature_offset=-5.0)
+
+    state = hass.states.get(CLIMATE_ENTITY_ID)
+    assert state.attributes["current_temperature"] is None
+
+
+async def test_humidity_offset_is_applied(hass) -> None:
+    """The humidity offset shifts the reading."""
+    await async_setup_base(hass, temperature=19.0, humidity=45.0)
+    await _setup(hass, humidity_offset=10)
+
+    assert hass.states.get(CLIMATE_ENTITY_ID).attributes["current_humidity"] == 55
+
+
+async def test_humidity_offset_is_clamped_at_100(hass) -> None:
+    """A positive offset can't push the reading above 100 %, also on updates."""
+    await async_setup_base(hass, temperature=19.0, humidity=95.0)
+    await _setup(hass, humidity_offset=10)
+    assert hass.states.get(CLIMATE_ENTITY_ID).attributes["current_humidity"] == 100
+
+    hass.states.async_set(HUMIDITY_SENSOR, "60")
+    await hass.async_block_till_done()
+    assert hass.states.get(CLIMATE_ENTITY_ID).attributes["current_humidity"] == 70
+
+
+async def test_negative_humidity_offset_is_clamped_at_zero(hass) -> None:
+    """A negative offset larger than the reading floors at 0 %."""
+    await async_setup_base(hass, temperature=19.0, humidity=3.0)
+    await _setup(hass, humidity_offset=-10)
+
+    assert hass.states.get(CLIMATE_ENTITY_ID).attributes["current_humidity"] == 0
