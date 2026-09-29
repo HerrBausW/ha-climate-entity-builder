@@ -15,6 +15,7 @@ from custom_components.climate_entity_builder.const import (
     CONF_HOT_TOLERANCE,
     CONF_HUMIDITY_SENSOR,
     CONF_MAX_TEMP,
+    CONF_MIN_CYCLE_DURATION,
     CONF_MIN_TEMP,
     CONF_NAME,
     CONF_PROFILE_ICON,
@@ -25,6 +26,10 @@ from custom_components.climate_entity_builder.const import (
     CONF_SENSOR_STALE_TIMEOUT,
     CONF_TARGET_TEMP_STEP,
     CONF_TEMP_SENSOR,
+    CONF_WINDOW_OPEN_DELAY,
+    CONF_WINDOW_OPEN_TEMPERATURE,
+    CONF_WINDOW_SENSORS,
+    DEFAULT_WINDOW_OPEN_TEMPERATURE,
     DOMAIN,
     SUBENTRY_TYPE_PROFILE,
     SUBENTRY_TYPE_THERMOSTAT,
@@ -59,6 +64,47 @@ def thermostat_data(**overrides: Any) -> dict[str, Any]:
     }
     data.update(overrides)
     return data
+
+
+def sectioned_thermostat_data(**overrides: Any) -> dict[str, Any]:
+    """Return a thermostat form submission shaped like the real, sectioned schema.
+
+    Fields that can carry a validation error (name, min/max temp, sensor
+    min/max valid) stay flat, matching `_thermostat_data_schema`; everything
+    else is nested under its section key, exactly as the frontend submits it.
+    """
+    flat = thermostat_data(**overrides)
+    return {
+        CONF_NAME: flat[CONF_NAME],
+        CONF_TEMP_SENSOR: flat[CONF_TEMP_SENSOR],
+        CONF_HEATER: flat[CONF_HEATER],
+        "sensors_schedule": {
+            CONF_HUMIDITY_SENSOR: flat.get(CONF_HUMIDITY_SENSOR),
+            CONF_SCHEDULE: flat.get(CONF_SCHEDULE),
+        },
+        CONF_MIN_TEMP: flat[CONF_MIN_TEMP],
+        CONF_MAX_TEMP: flat[CONF_MAX_TEMP],
+        "hysteresis": {
+            CONF_TARGET_TEMP_STEP: flat[CONF_TARGET_TEMP_STEP],
+            CONF_COLD_TOLERANCE: flat[CONF_COLD_TOLERANCE],
+            CONF_HOT_TOLERANCE: flat[CONF_HOT_TOLERANCE],
+            CONF_MIN_CYCLE_DURATION: flat.get(CONF_MIN_CYCLE_DURATION),
+        },
+        "window_pause": {
+            CONF_WINDOW_SENSORS: flat.get(CONF_WINDOW_SENSORS) or [],
+            CONF_WINDOW_OPEN_DELAY: flat.get(CONF_WINDOW_OPEN_DELAY),
+            CONF_WINDOW_OPEN_TEMPERATURE: flat.get(
+                CONF_WINDOW_OPEN_TEMPERATURE, DEFAULT_WINDOW_OPEN_TEMPERATURE
+            ),
+        },
+        "presets": {
+            CONF_COMFORT_TEMP: flat[CONF_COMFORT_TEMP],
+            CONF_ECO_TEMP: flat[CONF_ECO_TEMP],
+        },
+        CONF_SENSOR_STALE_TIMEOUT: flat[CONF_SENSOR_STALE_TIMEOUT],
+        CONF_SENSOR_MIN_VALID: flat[CONF_SENSOR_MIN_VALID],
+        CONF_SENSOR_MAX_VALID: flat[CONF_SENSOR_MAX_VALID],
+    }
 
 
 def thermostat_subentry(**overrides: Any) -> dict[str, Any]:

@@ -35,7 +35,7 @@
             "min_cycle_duration": "Minimum switch cycle duration (optional)",
             "window_sensors": "Window/door sensors pausing heating (optional)",
             "window_open_delay": "Delay before pausing after a window opens (optional)",
-            "window_open_profile": "Profile for the window-open pause (optional, defaults to eco/setback temperature)",
+            "window_open_temperature": "Window-open temperature",
             "comfort_temperature": "Comfort temperature (schedule on)",
             "eco_temperature": "Eco/setback temperature (schedule off)",
             "sensor_stale_timeout": "Failsafe delay after invalid sensor reading",
@@ -46,12 +46,26 @@
             "heater": "Turned on/off via the generic homeassistant.turn_on/turn_off services.",
             "schedule_entity": "A schedule.* entity. When active, the comfort temperature is used; otherwise the eco temperature.",
             "min_cycle_duration": "Prevents short-cycling the heater output.",
-            "window_sensors": "While any of these is open, heating pauses and switches to a paused target temperature instead of the normal setpoint (see the profile field below for which one).",
+            "window_sensors": "While any of these is open, heating pauses and switches to the window-open temperature below instead of the normal setpoint.",
             "window_open_delay": "Ignores a brief opening; heating only pauses once a window has stayed open this long.",
-            "window_open_profile": "Sets the target temperature while paused for an open window (see the window/door sensors field above). Leave this empty to use the eco/setback temperature below instead - that's the only behavior there was before this field existed.",
+            "window_open_temperature": "Target temperature while paused for an open window (see the window/door sensors field above).",
             "sensor_stale_timeout": "How long an unavailable/unknown/implausible reading is tolerated before the heater is forced off.",
             "sensor_min_valid_temp": "Readings below this value are treated as implausible.",
             "sensor_max_valid_temp": "Readings above this value are treated as implausible."
+          },
+          "sections": {
+            "sensors_schedule": {
+              "name": "Optional sensors & schedule"
+            },
+            "hysteresis": {
+              "name": "Hysteresis & switch cycling"
+            },
+            "window_pause": {
+              "name": "Window pause"
+            },
+            "presets": {
+              "name": "Presets"
+            }
           }
         },
         "reconfigure": {
@@ -71,7 +85,7 @@
             "min_cycle_duration": "Minimum switch cycle duration (optional)",
             "window_sensors": "Window/door sensors pausing heating (optional)",
             "window_open_delay": "Delay before pausing after a window opens (optional)",
-            "window_open_profile": "Profile for the window-open pause (optional, defaults to eco/setback temperature)",
+            "window_open_temperature": "Window-open temperature",
             "comfort_temperature": "Comfort temperature (schedule on)",
             "eco_temperature": "Eco/setback temperature (schedule off)",
             "sensor_stale_timeout": "Failsafe delay after invalid sensor reading",
@@ -82,12 +96,26 @@
             "heater": "Turned on/off via the generic homeassistant.turn_on/turn_off services.",
             "schedule_entity": "A schedule.* entity. When active, the comfort temperature is used; otherwise the eco temperature.",
             "min_cycle_duration": "Prevents short-cycling the heater output.",
-            "window_sensors": "While any of these is open, heating pauses and switches to a paused target temperature instead of the normal setpoint (see the profile field below for which one).",
+            "window_sensors": "While any of these is open, heating pauses and switches to the window-open temperature below instead of the normal setpoint.",
             "window_open_delay": "Ignores a brief opening; heating only pauses once a window has stayed open this long.",
-            "window_open_profile": "Sets the target temperature while paused for an open window (see the window/door sensors field above). Leave this empty to use the eco/setback temperature below instead - that's the only behavior there was before this field existed.",
+            "window_open_temperature": "Target temperature while paused for an open window (see the window/door sensors field above).",
             "sensor_stale_timeout": "How long an unavailable/unknown/implausible reading is tolerated before the heater is forced off.",
             "sensor_min_valid_temp": "Readings below this value are treated as implausible.",
             "sensor_max_valid_temp": "Readings above this value are treated as implausible."
+          },
+          "sections": {
+            "sensors_schedule": {
+              "name": "Optional sensors & schedule"
+            },
+            "hysteresis": {
+              "name": "Hysteresis & switch cycling"
+            },
+            "window_pause": {
+              "name": "Window pause"
+            },
+            "presets": {
+              "name": "Presets"
+            }
           }
         }
       },
@@ -123,7 +151,7 @@
         },
         "reconfigure": {
           "title": "Edit profile",
-          "description": "Update this profile. Renaming it is safe - any thermostat set up to use it while paused for an open window keeps working, since that's linked internally rather than by this name.",
+          "description": "Update this profile.",
           "data": {
             "name": "Name",
             "temperature": "Temperature",

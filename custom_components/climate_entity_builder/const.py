@@ -29,7 +29,7 @@ CONF_SENSOR_MIN_VALID = "sensor_min_valid_temp"
 CONF_SENSOR_MAX_VALID = "sensor_max_valid_temp"
 CONF_WINDOW_SENSORS = "window_sensors"
 CONF_WINDOW_OPEN_DELAY = "window_open_delay"
-CONF_WINDOW_OPEN_PROFILE = "window_open_profile"
+CONF_WINDOW_OPEN_TEMPERATURE = "window_open_temperature"
 CONF_PROFILE_TEMPERATURE = "temperature"
 CONF_PROFILE_ICON = "icon"
 
@@ -46,6 +46,7 @@ DEFAULT_SENSOR_STALE_TIMEOUT_MINUTES = 15
 DEFAULT_SENSOR_MIN_VALID_TEMP = 5.0
 DEFAULT_SENSOR_MAX_VALID_TEMP = 40.0
 DEFAULT_PROFILE_TEMPERATURE = DEFAULT_COMFORT_TEMP
+DEFAULT_WINDOW_OPEN_TEMPERATURE = DEFAULT_ECO_TEMP
 
 # --- Presets -------------------------------------------------------------------
 # Presets are only ever offered while hvac_mode == HEAT. In AUTO mode the

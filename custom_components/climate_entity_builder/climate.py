@@ -63,10 +63,11 @@ from .const import (
     CONF_TARGET_TEMP_STEP,
     CONF_TEMP_SENSOR,
     CONF_WINDOW_OPEN_DELAY,
-    CONF_WINDOW_OPEN_PROFILE,
+    CONF_WINDOW_OPEN_TEMPERATURE,
     CONF_WINDOW_SENSORS,
     DATA_FAILSAFE_STATES,
     DATA_WINDOW_OPEN_STATES,
+    DEFAULT_WINDOW_OPEN_TEMPERATURE,
     DOMAIN,
     MANUFACTURER,
     PRESET_WINDOW_OPEN,
@@ -90,7 +91,6 @@ def _hub_profiles(entry: ConfigEntry) -> list[dict[str, Any]]:
     """
     return [
         {
-            "id": subentry.subentry_id,
             "name": subentry.data[CONF_NAME],
             "temperature": subentry.data[CONF_PROFILE_TEMPERATURE],
             "icon": subentry.data.get(CONF_PROFILE_ICON),
@@ -178,10 +178,12 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
         self._window_open_delay: timedelta | None = (
             timedelta(**raw_window_delay) if raw_window_delay else None
         )
-        # By stable subentry ID, not name, so renaming/reordering profiles
-        # later never breaks this link. A stale/never-set ID (deleted
-        # profile, or simply none picked) falls back to the eco temperature.
-        self._window_open_profile_id: str | None = data.get(CONF_WINDOW_OPEN_PROFILE)
+        # .get() with a fallback, not data[...]: subentries created before
+        # this field existed don't have it in their stored data, and a
+        # KeyError here would take down the whole climate platform.
+        self._window_open_temp: float = data.get(
+            CONF_WINDOW_OPEN_TEMPERATURE, DEFAULT_WINDOW_OPEN_TEMPERATURE
+        )
         self._attr_hvac_mode: HVACMode = HVACMode.OFF
         self._attr_target_temperature: float = self._comfort_temp
         self._attr_preset_mode: str = PRESET_NONE
@@ -289,14 +291,6 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
         for profile in self._profiles:
             if profile["name"] == name:
                 return profile["temperature"]
-        return None
-
-    def _profile_by_id(self, profile_id: str | None) -> dict[str, Any] | None:
-        if profile_id is None:
-            return None
-        for profile in self._profiles:
-            if profile["id"] == profile_id:
-                return profile
         return None
 
     @property
@@ -568,8 +562,7 @@ class RoomThermostatClimate(ClimateEntity, RestoreEntity):
         if self._attr_hvac_mode == HVACMode.OFF:
             return None
         if self._window_open:
-            profile = self._profile_by_id(self._window_open_profile_id)
-            return profile["temperature"] if profile is not None else self._eco_temp
+            return self._window_open_temp
         if self._attr_hvac_mode == HVACMode.AUTO:
             return self._comfort_temp if self._schedule_active() else self._eco_temp
         if self._attr_hvac_mode == HVACMode.HEAT:

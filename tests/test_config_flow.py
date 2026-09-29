@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from homeassistant.config_entries import SOURCE_RECONFIGURE, SOURCE_USER
-from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.data_entry_flow import FlowResultType, section
 
 from custom_components.climate_entity_builder.config_flow import _thermostat_data_schema
 from custom_components.climate_entity_builder.const import (
@@ -16,13 +16,23 @@ from custom_components.climate_entity_builder.const import (
     SUBENTRY_TYPE_THERMOSTAT,
 )
 
-from .helpers import make_hub_entry, thermostat_data, thermostat_subentry
+from .helpers import make_hub_entry, sectioned_thermostat_data, thermostat_subentry
+
+
+def _iter_markers(schema):
+    """Yield every (marker, validator) pair, descending into section()s too."""
+    for marker, validator in schema.schema.items():
+        yield marker, validator
+        if isinstance(validator, section):
+            yield from _iter_markers(validator.schema)
 
 
 def _marker_default(schema, key: str):
-    """Return the resolved default for a vol.Schema key marker."""
-    marker = next(k for k in schema.schema if str(k) == key)
-    return marker.default()
+    """Return the resolved default for a vol.Schema key marker, sections included."""
+    for marker, _validator in _iter_markers(schema):
+        if str(marker) == key:
+            return marker.default()
+    raise KeyError(key)
 
 
 async def test_hub_config_flow_creates_entry(hass) -> None:
@@ -62,7 +72,7 @@ async def test_add_thermostat_subentry_success(hass) -> None:
     assert result["type"] is FlowResultType.FORM
 
     result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], thermostat_data()
+        result["flow_id"], sectioned_thermostat_data()
     )
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == "Schlafzimmer"
@@ -81,7 +91,7 @@ async def test_add_thermostat_duplicate_name_rejected(hass) -> None:
         (entry.entry_id, SUBENTRY_TYPE_THERMOSTAT), context={"source": SOURCE_USER}
     )
     result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], thermostat_data(name="Schlafzimmer")
+        result["flow_id"], sectioned_thermostat_data(name="Schlafzimmer")
     )
     assert result["type"] is FlowResultType.FORM
     assert result["errors"][CONF_NAME] == "name_exists"
@@ -97,7 +107,7 @@ async def test_add_thermostat_invalid_temperature_range(hass) -> None:
     )
     result = await hass.config_entries.subentries.async_configure(
         result["flow_id"],
-        thermostat_data(**{CONF_MIN_TEMP: 25.0, CONF_MAX_TEMP: 20.0}),
+        sectioned_thermostat_data(**{CONF_MIN_TEMP: 25.0, CONF_MAX_TEMP: 20.0}),
     )
     assert result["type"] is FlowResultType.FORM
     assert result["errors"][CONF_MAX_TEMP] == "min_max_invalid"
@@ -115,7 +125,7 @@ async def test_reconfigure_thermostat_changes_entities(hass) -> None:
     )
     assert result["type"] is FlowResultType.FORM
 
-    new_data = thermostat_data(
+    new_data = sectioned_thermostat_data(
         **{CONF_HEATER: "switch.kuche_heizventil", CONF_NAME: "Schlafzimmer"}
     )
     result = await hass.config_entries.subentries.async_configure(
@@ -135,16 +145,16 @@ def test_window_sensors_default_is_never_none() -> None:
     this one field's rendering in Reconfigure for an existing thermostat,
     even though a merely-absent key correctly falls back to []. Guard both.
     """
-    assert _marker_default(_thermostat_data_schema({}, []), CONF_WINDOW_SENSORS) == []
+    assert _marker_default(_thermostat_data_schema({}), CONF_WINDOW_SENSORS) == []
     assert (
         _marker_default(
-            _thermostat_data_schema({CONF_WINDOW_SENSORS: None}, []), CONF_WINDOW_SENSORS
+            _thermostat_data_schema({CONF_WINDOW_SENSORS: None}), CONF_WINDOW_SENSORS
         )
         == []
     )
     assert (
         _marker_default(
-            _thermostat_data_schema({CONF_WINDOW_SENSORS: ["binary_sensor.x"]}, []),
+            _thermostat_data_schema({CONF_WINDOW_SENSORS: ["binary_sensor.x"]}),
             CONF_WINDOW_SENSORS,
         )
         == ["binary_sensor.x"]
@@ -176,7 +186,7 @@ async def test_reconfigure_self_heals_stale_none_window_sensors(hass) -> None:
     assert _marker_default(result["data_schema"], CONF_WINDOW_SENSORS) == []
 
     result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], thermostat_data()
+        result["flow_id"], sectioned_thermostat_data()
     )
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "reconfigure_successful"

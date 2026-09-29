@@ -12,19 +12,10 @@ from pytest_homeassistant_custom_component.common import mock_restore_cache
 from custom_components.climate_entity_builder.const import (
     CONF_NAME,
     CONF_PROFILE_TEMPERATURE,
-    CONF_WINDOW_OPEN_PROFILE,
     SUBENTRY_TYPE_PROFILE,
-    SUBENTRY_TYPE_THERMOSTAT,
 )
 
-from .helpers import (
-    WINDOW_SENSOR,
-    async_setup_base,
-    make_hub_entry,
-    profile_subentry,
-    thermostat_data,
-    thermostat_subentry,
-)
+from .helpers import async_setup_base, make_hub_entry, profile_subentry, thermostat_subentry
 
 CLIMATE_ENTITY_ID = "climate.schlafzimmer"
 
@@ -269,81 +260,3 @@ async def test_profile_icon_shown_while_active(hass) -> None:
     state = hass.states.get(CLIMATE_ENTITY_ID)
     assert state.attributes.get("icon") is None
 
-
-async def _setup_with_window_profile(hass):
-    """Set up a hub with one profile and one window-sensor thermostat linked
-    to it by the profile's own subentry ID, exactly as the config flow would.
-    """
-    await async_setup_base(hass, temperature=19.0)
-    hass.states.async_set(WINDOW_SENSOR, "off")
-    entry = make_hub_entry(
-        subentries=[
-            profile_subentry("Frostschutz", 10.0),
-            thermostat_subentry(window_sensors=[WINDOW_SENSOR]),
-        ]
-    )
-    entry.add_to_hass(hass)
-    assert await hass.config_entries.async_setup(entry.entry_id)
-    await hass.async_block_till_done()
-
-    profile_id = next(
-        s.subentry_id
-        for s in entry.subentries.values()
-        if s.subentry_type == SUBENTRY_TYPE_PROFILE
-    )
-    thermostat_id = next(
-        s.subentry_id
-        for s in entry.subentries.values()
-        if s.subentry_type == SUBENTRY_TYPE_THERMOSTAT
-    )
-
-    result = await hass.config_entries.subentries.async_init(
-        (entry.entry_id, SUBENTRY_TYPE_THERMOSTAT),
-        context={"source": SOURCE_RECONFIGURE, "subentry_id": thermostat_id},
-    )
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"],
-        thermostat_data(
-            window_sensors=[WINDOW_SENSOR], window_open_profile=profile_id
-        ),
-    )
-    assert result["type"] is FlowResultType.ABORT
-    await hass.async_block_till_done()
-
-    return entry, profile_id
-
-
-async def test_window_open_uses_the_linked_profile(hass) -> None:
-    """Item: pick which profile applies while paused for an open window."""
-    await _setup_with_window_profile(hass)
-
-    await _set_hvac_mode(hass, CLIMATE_ENTITY_ID, HVACMode.HEAT)
-    await hass.async_block_till_done()
-    hass.states.async_set(WINDOW_SENSOR, "on")
-    await hass.async_block_till_done()
-
-    state = hass.states.get(CLIMATE_ENTITY_ID)
-    assert state.attributes[ATTR_TEMPERATURE] == 10.0
-
-
-async def test_renaming_linked_profile_does_not_break_window_open(hass) -> None:
-    """The link is by stable subentry ID, so renaming the profile is safe."""
-    entry, profile_id = await _setup_with_window_profile(hass)
-
-    result = await hass.config_entries.subentries.async_init(
-        (entry.entry_id, SUBENTRY_TYPE_PROFILE),
-        context={"source": SOURCE_RECONFIGURE, "subentry_id": profile_id},
-    )
-    result = await hass.config_entries.subentries.async_configure(
-        result["flow_id"], {CONF_NAME: "Urlaub", CONF_PROFILE_TEMPERATURE: 10.0}
-    )
-    assert result["type"] is FlowResultType.ABORT
-    await hass.async_block_till_done()
-
-    await _set_hvac_mode(hass, CLIMATE_ENTITY_ID, HVACMode.HEAT)
-    await hass.async_block_till_done()
-    hass.states.async_set(WINDOW_SENSOR, "on")
-    await hass.async_block_till_done()
-
-    state = hass.states.get(CLIMATE_ENTITY_ID)
-    assert state.attributes[ATTR_TEMPERATURE] == 10.0

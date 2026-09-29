@@ -16,6 +16,7 @@ from homeassistant.config_entries import (
     SubentryFlowResult,
 )
 from homeassistant.core import callback
+from homeassistant.data_entry_flow import section
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.selector import (
     DurationSelector,
@@ -26,9 +27,6 @@ from homeassistant.helpers.selector import (
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
-    SelectOptionDict,
-    SelectSelector,
-    SelectSelectorConfig,
 )
 
 from .const import (
@@ -51,7 +49,7 @@ from .const import (
     CONF_TARGET_TEMP_STEP,
     CONF_TEMP_SENSOR,
     CONF_WINDOW_OPEN_DELAY,
-    CONF_WINDOW_OPEN_PROFILE,
+    CONF_WINDOW_OPEN_TEMPERATURE,
     CONF_WINDOW_SENSORS,
     DEFAULT_COLD_TOLERANCE,
     DEFAULT_COMFORT_TEMP,
@@ -64,6 +62,7 @@ from .const import (
     DEFAULT_SENSOR_MIN_VALID_TEMP,
     DEFAULT_SENSOR_STALE_TIMEOUT_MINUTES,
     DEFAULT_TARGET_TEMP_STEP,
+    DEFAULT_WINDOW_OPEN_TEMPERATURE,
     DOMAIN,
     RESERVED_PRESET_NAMES,
     SUBENTRY_TYPE_PROFILE,
@@ -76,13 +75,15 @@ from .const import (
 HEATER_DOMAINS = ["switch", "input_boolean"]
 
 
-def _thermostat_data_schema(
-    defaults: Mapping[str, Any], profile_options: list[SelectOptionDict]
-) -> vol.Schema:
+def _thermostat_data_schema(defaults: Mapping[str, Any]) -> vol.Schema:
     """Build the (sub)entry schema, pre-filled with existing values if any.
 
-    profile_options lists this thermostat's own hub's current profiles (id ->
-    name), used for the "which profile applies while a window is open" field.
+    Fields that `_validate` can attach an error to (name, min/max temp,
+    sensor min/max valid) are kept flat/top-level rather than inside a
+    section: a section's nested fields aren't shown a per-field error by the
+    current HA frontend (its inner <ha-form> isn't given the errors object
+    at all), so an error on one of those would otherwise silently vanish
+    instead of being shown to the user.
     """
 
     def d(key: str, fallback: Any) -> Any:
@@ -97,41 +98,24 @@ def _thermostat_data_schema(
             vol.Required(CONF_HEATER, default=d(CONF_HEATER, None)): EntitySelector(
                 EntitySelectorConfig(domain=HEATER_DOMAINS)
             ),
-            vol.Optional(
-                CONF_HUMIDITY_SENSOR, default=d(CONF_HUMIDITY_SENSOR, None)
-            ): vol.Any(
-                None,
-                EntitySelector(EntitySelectorConfig(domain="sensor", device_class="humidity")),
+            vol.Required("sensors_schedule"): section(
+                vol.Schema(
+                    {
+                        vol.Optional(
+                            CONF_HUMIDITY_SENSOR, default=d(CONF_HUMIDITY_SENSOR, None)
+                        ): vol.Any(
+                            None,
+                            EntitySelector(
+                                EntitySelectorConfig(domain="sensor", device_class="humidity")
+                            ),
+                        ),
+                        vol.Optional(
+                            CONF_SCHEDULE, default=d(CONF_SCHEDULE, None)
+                        ): vol.Any(None, EntitySelector(EntitySelectorConfig(domain="schedule"))),
+                    }
+                ),
+                {"collapsed": False},
             ),
-            vol.Optional(CONF_SCHEDULE, default=d(CONF_SCHEDULE, None)): vol.Any(
-                None, EntitySelector(EntitySelectorConfig(domain="schedule"))
-            ),
-            # Window/door sensors and their delay form one cohesive "window
-            # pause" group and are kept together, right after the other
-            # entity pickers above.
-            #
-            # A multi-entity EntitySelector's default must be a list, never
-            # None: some HA frontend versions submit "nothing selected" as
-            # null rather than [], and a previously-saved null default
-            # (present key, not missing) silently breaks *just this field's*
-            # rendering in Reconfigure. `.get(key, [])` alone doesn't guard
-            # against that, since the fallback only applies when the key is
-            # absent, not when it's present with value None.
-            vol.Optional(
-                CONF_WINDOW_SENSORS, default=d(CONF_WINDOW_SENSORS, []) or []
-            ): EntitySelector(
-                EntitySelectorConfig(domain="binary_sensor", multiple=True, reorder=True)
-            ),
-            vol.Optional(
-                CONF_WINDOW_OPEN_DELAY, default=d(CONF_WINDOW_OPEN_DELAY, None)
-            ): vol.Any(None, DurationSelector(DurationSelectorConfig(enable_day=False))),
-            # References a profile by its stable subentry ID, not by name, so
-            # renaming or reordering profiles later never breaks this link.
-            # Left unset, the eco/setback temperature is used while paused
-            # (unchanged from before profiles existed).
-            vol.Optional(
-                CONF_WINDOW_OPEN_PROFILE, default=d(CONF_WINDOW_OPEN_PROFILE, None)
-            ): vol.Any(None, SelectSelector(SelectSelectorConfig(options=profile_options))),
             vol.Required(
                 CONF_MIN_TEMP, default=d(CONF_MIN_TEMP, DEFAULT_MIN_TEMP)
             ): NumberSelector(
@@ -146,46 +130,125 @@ def _thermostat_data_schema(
                     min=-20, max=50, step=0.5, mode=NumberSelectorMode.BOX, unit_of_measurement="°C"
                 )
             ),
-            vol.Required(
-                CONF_TARGET_TEMP_STEP,
-                default=d(CONF_TARGET_TEMP_STEP, DEFAULT_TARGET_TEMP_STEP),
-            ): NumberSelector(
-                NumberSelectorConfig(
-                    min=0.1, max=5, step=0.1, mode=NumberSelectorMode.BOX, unit_of_measurement="°C"
-                )
+            vol.Required("hysteresis"): section(
+                vol.Schema(
+                    {
+                        vol.Required(
+                            CONF_TARGET_TEMP_STEP,
+                            default=d(CONF_TARGET_TEMP_STEP, DEFAULT_TARGET_TEMP_STEP),
+                        ): NumberSelector(
+                            NumberSelectorConfig(
+                                min=0.1,
+                                max=5,
+                                step=0.1,
+                                mode=NumberSelectorMode.BOX,
+                                unit_of_measurement="°C",
+                            )
+                        ),
+                        vol.Required(
+                            CONF_COLD_TOLERANCE,
+                            default=d(CONF_COLD_TOLERANCE, DEFAULT_COLD_TOLERANCE),
+                        ): NumberSelector(
+                            NumberSelectorConfig(
+                                min=0,
+                                max=5,
+                                step=0.1,
+                                mode=NumberSelectorMode.BOX,
+                                unit_of_measurement="°C",
+                            )
+                        ),
+                        vol.Required(
+                            CONF_HOT_TOLERANCE,
+                            default=d(CONF_HOT_TOLERANCE, DEFAULT_HOT_TOLERANCE),
+                        ): NumberSelector(
+                            NumberSelectorConfig(
+                                min=0,
+                                max=5,
+                                step=0.1,
+                                mode=NumberSelectorMode.BOX,
+                                unit_of_measurement="°C",
+                            )
+                        ),
+                        vol.Optional(
+                            CONF_MIN_CYCLE_DURATION, default=d(CONF_MIN_CYCLE_DURATION, None)
+                        ): vol.Any(
+                            None, DurationSelector(DurationSelectorConfig(enable_day=False))
+                        ),
+                    }
+                ),
+                {"collapsed": True},
             ),
-            vol.Required(
-                CONF_COLD_TOLERANCE,
-                default=d(CONF_COLD_TOLERANCE, DEFAULT_COLD_TOLERANCE),
-            ): NumberSelector(
-                NumberSelectorConfig(
-                    min=0, max=5, step=0.1, mode=NumberSelectorMode.BOX, unit_of_measurement="°C"
-                )
+            vol.Required("window_pause"): section(
+                vol.Schema(
+                    {
+                        # A multi-entity EntitySelector's default must be a
+                        # list, never None: some HA frontend versions submit
+                        # "nothing selected" as null rather than [], and a
+                        # previously-saved null default (present key, not
+                        # missing) silently breaks *just this field's*
+                        # rendering in Reconfigure. `.get(key, [])` alone
+                        # doesn't guard against that, since the fallback only
+                        # applies when the key is absent, not when it's
+                        # present with value None.
+                        vol.Optional(
+                            CONF_WINDOW_SENSORS, default=d(CONF_WINDOW_SENSORS, []) or []
+                        ): EntitySelector(
+                            EntitySelectorConfig(
+                                domain="binary_sensor", multiple=True, reorder=True
+                            )
+                        ),
+                        vol.Optional(
+                            CONF_WINDOW_OPEN_DELAY, default=d(CONF_WINDOW_OPEN_DELAY, None)
+                        ): vol.Any(
+                            None, DurationSelector(DurationSelectorConfig(enable_day=False))
+                        ),
+                        vol.Required(
+                            CONF_WINDOW_OPEN_TEMPERATURE,
+                            default=d(
+                                CONF_WINDOW_OPEN_TEMPERATURE, DEFAULT_WINDOW_OPEN_TEMPERATURE
+                            ),
+                        ): NumberSelector(
+                            NumberSelectorConfig(
+                                min=-20,
+                                max=50,
+                                step=0.5,
+                                mode=NumberSelectorMode.BOX,
+                                unit_of_measurement="°C",
+                            )
+                        ),
+                    }
+                ),
+                {"collapsed": False},
             ),
-            vol.Required(
-                CONF_HOT_TOLERANCE,
-                default=d(CONF_HOT_TOLERANCE, DEFAULT_HOT_TOLERANCE),
-            ): NumberSelector(
-                NumberSelectorConfig(
-                    min=0, max=5, step=0.1, mode=NumberSelectorMode.BOX, unit_of_measurement="°C"
-                )
-            ),
-            vol.Optional(
-                CONF_MIN_CYCLE_DURATION, default=d(CONF_MIN_CYCLE_DURATION, None)
-            ): vol.Any(None, DurationSelector(DurationSelectorConfig(enable_day=False))),
-            vol.Required(
-                CONF_COMFORT_TEMP, default=d(CONF_COMFORT_TEMP, DEFAULT_COMFORT_TEMP)
-            ): NumberSelector(
-                NumberSelectorConfig(
-                    min=-20, max=50, step=0.5, mode=NumberSelectorMode.BOX, unit_of_measurement="°C"
-                )
-            ),
-            vol.Required(
-                CONF_ECO_TEMP, default=d(CONF_ECO_TEMP, DEFAULT_ECO_TEMP)
-            ): NumberSelector(
-                NumberSelectorConfig(
-                    min=-20, max=50, step=0.5, mode=NumberSelectorMode.BOX, unit_of_measurement="°C"
-                )
+            vol.Required("presets"): section(
+                vol.Schema(
+                    {
+                        vol.Required(
+                            CONF_COMFORT_TEMP,
+                            default=d(CONF_COMFORT_TEMP, DEFAULT_COMFORT_TEMP),
+                        ): NumberSelector(
+                            NumberSelectorConfig(
+                                min=-20,
+                                max=50,
+                                step=0.5,
+                                mode=NumberSelectorMode.BOX,
+                                unit_of_measurement="°C",
+                            )
+                        ),
+                        vol.Required(
+                            CONF_ECO_TEMP, default=d(CONF_ECO_TEMP, DEFAULT_ECO_TEMP)
+                        ): NumberSelector(
+                            NumberSelectorConfig(
+                                min=-20,
+                                max=50,
+                                step=0.5,
+                                mode=NumberSelectorMode.BOX,
+                                unit_of_measurement="°C",
+                            )
+                        ),
+                    }
+                ),
+                {"collapsed": False},
             ),
             vol.Required(
                 CONF_SENSOR_STALE_TIMEOUT,
@@ -213,6 +276,25 @@ def _thermostat_data_schema(
             ),
         }
     )
+
+
+_THERMOSTAT_SECTION_KEYS = ("sensors_schedule", "hysteresis", "window_pause", "presets")
+
+
+def _flatten_sections(user_input: dict[str, Any]) -> dict[str, Any]:
+    """Merge each section's nested values back into one flat dict.
+
+    A sectioned field is submitted (and needs pre-filling on redisplay) as
+    `user_input["section_key"] = {"inner_field": value, ...}` rather than
+    flat - flatten it back so the rest of this module can keep treating
+    subentry data as a single flat dict, matching what's actually stored.
+    """
+    flat = dict(user_input)
+    for key in _THERMOSTAT_SECTION_KEYS:
+        section_values = flat.pop(key, None)
+        if section_values:
+            flat.update(section_values)
+    return flat
 
 
 def _duplicate_name_error(
@@ -375,33 +457,30 @@ class ThermostatSubentryFlowHandler(ConfigSubentryFlow):
         entry = self._get_entry()
         errors: dict[str, str] = {}
 
-        if user_input is not None:
+        flat_input = _flatten_sections(user_input) if user_input is not None else None
+
+        if flat_input is not None:
             errors = _validate(
-                user_input,
+                flat_input,
                 entry,
                 ignore_subentry_id=existing.subentry_id if existing else None,
             )
             if not errors:
-                name = user_input[CONF_NAME].strip()
+                name = flat_input[CONF_NAME].strip()
                 data = {
-                    **user_input,
+                    **flat_input,
                     CONF_NAME: name,
                     # Never persist None for the multi-select: a saved null
                     # here (rather than a missing key) breaks this field's
                     # rendering on the next Reconfigure.
-                    CONF_WINDOW_SENSORS: user_input.get(CONF_WINDOW_SENSORS) or [],
+                    CONF_WINDOW_SENSORS: flat_input.get(CONF_WINDOW_SENSORS) or [],
                 }
                 if existing is not None:
                     return self.async_update_and_abort(entry, existing, data=data, title=name)
                 return self.async_create_entry(title=name, data=data)
 
-        defaults = dict(existing.data) if existing else dict(user_input or {})
-        profile_options = [
-            SelectOptionDict(value=subentry.subentry_id, label=subentry.data[CONF_NAME])
-            for subentry in entry.subentries.values()
-            if subentry.subentry_type == SUBENTRY_TYPE_PROFILE
-        ]
-        schema = _thermostat_data_schema(defaults, profile_options)
+        defaults = dict(existing.data) if existing else dict(flat_input or {})
+        schema = _thermostat_data_schema(defaults)
         return self.async_show_form(
             step_id="reconfigure" if reconfigure else "user",
             data_schema=schema,

@@ -157,26 +157,18 @@ resumes immediately and the failsafe attribute clears.
 
 ## Window contacts
 
-Optionally select one or more `binary_sensor.*` window/door contacts. While
-any of them is open (after an optional delay, to ignore a quick opening for
-airing out the room), the thermostat regulates against a paused-setpoint
-instead of the normal one — it doesn't just switch fully off, so the room
-still gets a minimal amount of heat. This only applies while the thermostat
-is in `heat`/`auto`; if it's `off`, it stays `off` regardless of any window.
-
-That paused setpoint comes from the thermostat's own **"Profile to use
-while paused for a window"** field — pick any of the hub's
-[profiles](#custom-preset-profiles). Left unset, the eco/setback
-temperature is used instead, same as before profiles existed. The link is
-by the profile's stable ID, not its name, so renaming or re-temperature-ing
-that profile later never breaks it.
+Optionally select one or more `binary_sensor.*` window/door contacts and set
+a **window-open temperature**. While any of them is open (after an optional
+delay, to ignore a quick opening for airing out the room), the thermostat
+regulates against that temperature instead of the normal setpoint — it
+doesn't just switch fully off, so the room still gets a minimal amount of
+heat. This only applies while the thermostat is in `heat`/`auto`; if it's
+`off`, it stays `off` regardless of any window.
 
 While paused, the **Voreinstellung**/preset chip on the climate card shows
-**Window open** in place of the normal comfort/eco/none value — this is
-always shown, regardless of which profile (if any) supplies the actual
-temperature. Your actual setpoint and preset underneath are untouched and
-reassert themselves the moment the window closes — nothing to reset
-manually.
+**Window open** in place of the normal comfort/eco/none value. Your actual
+setpoint and preset underneath are untouched and reassert themselves the
+moment the window closes — nothing to reset manually.
 
 ## Custom preset profiles
 
