@@ -78,6 +78,14 @@ introduced in HA 2025.7).
 
 ### HACS (recommended)
 
+Climate Entity Builder is part of the default HACS catalog.
+
+1. Open HACS and search for **Climate Entity Builder**.
+2. Download it, then restart Home Assistant.
+
+If it doesn't show up yet (e.g. an older HACS version or a stale catalog),
+add it as a custom repository instead:
+
 1. HACS → Integrations → ⋮ → Custom repositories.
 2. Add `https://github.com/HerrBausW/ha-climate-entity-builder` as category
    **Integration**.
