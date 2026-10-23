@@ -386,7 +386,7 @@ and pull request.
 
 ## Roadmap
 
-Not in the MVP, but the architecture leaves room for: a *timed* boost
+Not implemented yet, but the architecture leaves room for: a *timed* boost
 preset (auto-reverting after a duration), multiple heater actuators per
 room, cooling, external temperature limiting, valve run-on, per-time-slot
 schedules with weekdays, and dedicated diagnostic/statistics entities.
