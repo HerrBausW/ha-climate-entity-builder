@@ -2,7 +2,7 @@
 
 [![Test](https://github.com/HerrBausW/ha-climate-entity-builder/actions/workflows/test.yml/badge.svg)](https://github.com/HerrBausW/ha-climate-entity-builder/actions/workflows/test.yml)
 [![Validate](https://github.com/HerrBausW/ha-climate-entity-builder/actions/workflows/validate.yml/badge.svg)](https://github.com/HerrBausW/ha-climate-entity-builder/actions/workflows/validate.yml)
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/integration)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **Turn any temperature sensor and switch into a full-featured virtual thermostat — no YAML, entirely through the Home Assistant UI.**
@@ -79,6 +79,10 @@ introduced in HA 2025.7).
 ### HACS (recommended)
 
 Climate Entity Builder is part of the default HACS catalog.
+
+[![Open your Home Assistant instance and open this repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=HerrBausW&repository=ha-climate-entity-builder&category=integration)
+
+Click the button above, or do it by hand:
 
 1. Open HACS and search for **Climate Entity Builder**.
 2. Download it, then restart Home Assistant.
